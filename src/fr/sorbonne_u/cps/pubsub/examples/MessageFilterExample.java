@@ -2,8 +2,11 @@ package fr.sorbonne_u.cps.pubsub.examples;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
+import fr.sorbonne_u.cps.pubsub.filters.valuefilters.ComparableValueFilter;
+import fr.sorbonne_u.cps.pubsub.filters.valuefilters.JokerValueFilter;
+import fr.sorbonne_u.cps.pubsub.filters.valuefilters.OneValueFilter;
 import fr.sorbonne_u.cps.pubsub.message.Message;
-import fr.sorbonne_u.cps.pubsub.message.Property;
 import fr.sorbonne_u.cps.pubsub.filters.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
@@ -59,7 +62,7 @@ public class MessageFilterExample {
 			System.out.println("Payload: " + message.getPayload());
 			System.out.println();
 		} catch (UnknownPropertyException e) {
-			System.err.println("Error: " + e.getMessage());
+			System.err.println("Error: " + e);
 		}
 	}
 	
@@ -72,7 +75,7 @@ public class MessageFilterExample {
 		
 		// Filter for exact value
 		MessageFilterI filter = new MessageFilter(
-			new PropertyFilter("status", new ValueFilter("active"))
+			new PropertyFilter("status", new OneValueFilter("active"))
 		);
 		
 		System.out.println("Message with status='active': " + filter.match(message));
@@ -123,7 +126,7 @@ public class MessageFilterExample {
 		// Filter for messages from the last hour
 		MessageFilterI recentFilter = new MessageFilter(
 			TimeFilter.from(past),
-			new PropertyFilter("data", WildcardValueFilter.getInstance())
+			new PropertyFilter("data", JokerValueFilter.getInstance())
 		);
 		
 		System.out.println("Message from last hour: " + recentFilter.match(message));
@@ -131,7 +134,7 @@ public class MessageFilterExample {
 		// Filter for messages in a specific time range
 		MessageFilterI rangeFilter = new MessageFilter(
 			TimeFilter.between(past, future),
-			new PropertyFilter("data", WildcardValueFilter.getInstance())
+			new PropertyFilter("data", JokerValueFilter.getInstance())
 		);
 		
 		System.out.println("Message in time range: " + rangeFilter.match(message));
@@ -187,7 +190,7 @@ public class MessageFilterExample {
 				original.getPropertyValue("station").equals(copy.getPropertyValue("station")));
 			System.out.println();
 		} catch (UnknownPropertyException e) {
-			System.err.println("Error: " + e.getMessage());
+			System.err.println("Error: " + e);
 		}
 	}
 }

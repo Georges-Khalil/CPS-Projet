@@ -1,4 +1,4 @@
-package fr.sorbonne_u.cps.pubsub.filters;
+package fr.sorbonne_u.cps.pubsub.filters.valuefilters;
 
 import java.io.Serializable;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.ValueFilterI;

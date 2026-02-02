@@ -18,7 +18,7 @@ public class MessageFilter implements MessageFilterI {
 	                     TimeFilterI timeFilter) {
 		this.propertyFilters = propertyFilters != null ? propertyFilters : new PropertyFilterI[0];
 		this.propertiesFilters = propertiesFilters != null ? propertiesFilters : new PropertiesFilterI[0];
-		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.wildcard();
+		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.joker();
 	}
 	
 	public MessageFilter(PropertyFilterI... propertyFilters) {

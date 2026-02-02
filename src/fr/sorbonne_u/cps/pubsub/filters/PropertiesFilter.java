@@ -19,7 +19,10 @@ public class PropertiesFilter implements PropertiesFilterI {
 	public MultiValuesFilterI getMultiValuesFilter() {
 		return this.multiValuesFilter;
 	}
-	
+
+    /**
+     * 'Property...' nous permet de match cette fonction avec une property, deux, trois ou alors une liste, une array
+     */
 	@Override
 	public boolean match(PropertyI... properties) {
 		if (properties == null) {
@@ -30,6 +33,7 @@ public class PropertiesFilter implements PropertiesFilterI {
 			return false;
 		}
 		Serializable[] values = new Serializable[names.length];
+        // On vérifie si on peut trouver les propriétés recherchées, et on en extrait les valeurs.
 		for (int i = 0; i < names.length; i++) {
 			String needed = names[i];
 			if (needed == null) {
@@ -49,6 +53,7 @@ public class PropertiesFilter implements PropertiesFilterI {
 				return false;
 			}
 		}
+        // Todo: implémenter un filtre spécifiques aux comparaisons qu'on veut faire entre différentes propriétés.
 		return multiValuesFilter.match(values);
 	}
 }
