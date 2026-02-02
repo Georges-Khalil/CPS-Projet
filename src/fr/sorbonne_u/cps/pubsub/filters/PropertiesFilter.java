@@ -1,6 +1,7 @@
 package fr.sorbonne_u.cps.pubsub.filters;
 
 import java.io.Serializable;
+import java.util.Objects;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.MultiValuesFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.PropertiesFilterI;
@@ -11,8 +12,7 @@ public class PropertiesFilter implements PropertiesFilterI {
 	private final MultiValuesFilterI multiValuesFilter;
 	
 	public PropertiesFilter(MultiValuesFilterI multiValuesFilter) {
-		assert multiValuesFilter != null;
-		this.multiValuesFilter = multiValuesFilter;
+		this.multiValuesFilter = Objects.requireNonNull(multiValuesFilter, "multiValuesFilter must not be null");
 	}
 	
 	@Override
@@ -22,14 +22,24 @@ public class PropertiesFilter implements PropertiesFilterI {
 	
 	@Override
 	public boolean match(PropertyI... properties) {
-		assert properties != null && properties.length > 1;
+		if (properties == null) {
+			return false;
+		}
 		String[] names = multiValuesFilter.getNames();
+		if (names == null || names.length == 0) {
+			return false;
+		}
 		Serializable[] values = new Serializable[names.length];
 		for (int i = 0; i < names.length; i++) {
 			String needed = names[i];
+			if (needed == null) {
+				return false;
+			}
 			boolean found = false;
 			for (PropertyI property : properties) {
-				if (property.getName().equals(needed)) {
+				if (property == null) continue;
+				String propName = property.getName();
+				if (needed.equals(propName)) {
 					values[i] = property.getValue();
 					found = true;
 					break;
