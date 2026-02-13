@@ -1,13 +1,11 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
+import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
-/**
- * Utilisé par tous les composants sauf le courtier, pour s'enregistrer auprès du courtier.
- */
-public class ClientRegistrationInboundPort implements RegistrationCI {
 
+public class ClientRegistrationOutboundPort extends AbstractOutboundPort implements RegistrationCI  {
 
     @Override
     public boolean registered(String receptionPortURI) throws Exception {
