@@ -30,15 +30,14 @@ public class BrokerPublishingInboundPort extends AbstractInboundPort implements 
     }
 
     @Override
-    public void publish(String receptionPortURI, String channel, MessageI message) {
-        /*
-        // Dans la vidéo c'est implémenté comme ça :
+    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         this.getOwner().handleRequest(
-            c -> ((Broker) c).publish(this.getPortURI(), channel, message)
-        );
-         */
-
-        // Mais les exemples proposent ça :
+                c -> {
+                    ((Broker) c).publish(this.getPortURI(), channel, message);
+                    return null; // Parce que on ne peut pas return void
+                });
+        /*
+        // Les exemples proposent cette implémentation :
         this.owner.runTask(
                 new AbstractComponent.AbstractTask() {
                     @Override
@@ -51,10 +50,18 @@ public class BrokerPublishingInboundPort extends AbstractInboundPort implements 
                         }
                     }
                 }) ;
+        */
     }
 
     @Override
-    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) {
+    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).publish(this.getPortURI(), channel, messages);
+                    return null; // Parce que on ne peut pas return void
+                });
+
+        /*
         this.owner.runTask(
                 new AbstractComponent.AbstractTask() {
                     @Override
@@ -67,5 +74,7 @@ public class BrokerPublishingInboundPort extends AbstractInboundPort implements 
                         }
                     }
                 }) ;
+
+         */
     }
 }

@@ -28,61 +28,85 @@ public class BrokerRegistrationInboundPort extends AbstractInboundPort implement
 
     @Override
     public boolean registered(String receptionPortURI) throws Exception {
-
-        // J'ai suivi les exemples proposés
         return this.getOwner().handleRequest(
-                new AbstractComponent.AbstractService<Boolean>() {
-                    @SuppressWarnings("unchecked")
-                    @Override
-                    public Boolean call() throws Exception {
-                        return ((Broker) this.getServiceOwner()).registered(receptionPortURI) ;
-                    }
-                }) ;
+                c -> ((Broker) c).registered(receptionPortURI));
 
+//        // Si on suit les exemples, on peut avoir cette forme la:
+//        return this.getOwner().handleRequest(
+//                new AbstractComponent.AbstractService<Boolean>() {
+//                    @SuppressWarnings("unchecked")
+//                    @Override
+//                    public Boolean call() throws Exception {
+//                        return ((Broker) this.getServiceOwner()).registered(receptionPortURI) ;
+//                    }
+//                }) ;
     }
 
     @Override
     public boolean registered(String receptionPortURI, RegistrationClass rc) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).registered(receptionPortURI, rc));
+
     }
+
+    //todo: le reste:
 
     @Override
     public String register(String receptionPortURI, RegistrationClass rc) throws Exception {
-        return "";
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).register(receptionPortURI, rc));
+
     }
 
     @Override
     public String modifyServiceClass(String receptionPortURI, RegistrationClass rc) throws Exception {
-        return "";
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).modifyServiceClass(receptionPortURI, rc));
+
     }
 
     @Override
     public void unregister(String receptionPortURI) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).unregister(receptionPortURI);
+                    return null;
+                } );
     }
 
     @Override
     public boolean channelExists(String channel) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).channelExists(channel));
     }
 
     @Override
     public boolean subscribed(String receptionPortURI, String channel) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).subscribed(receptionPortURI, channel));
     }
 
     @Override
     public void subscribe(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).subscribe(receptionPortURI, channel, filter);
+                    return null;
+                } );
     }
 
     @Override
     public void unsubscribe(String receptionPortURI, String channel) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).unsubscribe(receptionPortURI, channel);
+                    return null;
+                } );
     }
 
     @Override
     public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).modifyFilter(receptionPortURI, channel, filter));
     }
 }

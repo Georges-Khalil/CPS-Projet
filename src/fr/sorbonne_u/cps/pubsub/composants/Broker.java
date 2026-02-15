@@ -4,10 +4,7 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
-import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
-import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
-import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
-import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
+import fr.sorbonne_u.cps.pubsub.interfaces.*;
 import fr.sorbonne_u.cps.pubsub.ports.BrokerPublishingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.BrokerRegistrationInboundPort;
 
@@ -62,6 +59,8 @@ public class Broker extends AbstractComponent {
         super.shutdown();
     }
 
+    // todo: TOUT LES FNS
+
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         //todo
     }
@@ -72,8 +71,42 @@ public class Broker extends AbstractComponent {
 
 
     public boolean registered(String receptionPortURI) throws Exception {
-        return false //todo
+        return false; //todo
     }
 
-    // todo: registration
+    public boolean registered(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
+        return false;
+    }
+
+    public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
+        return "";
+    }
+
+    public String modifyServiceClass(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
+        return "";
+    }
+
+    public void unregister(String receptionPortURI) throws Exception {
+
+    }
+
+    public boolean channelExists(String channel) throws Exception {
+        return false;
+    }
+
+    public boolean subscribed(String receptionPortURI, String channel) throws Exception {
+        return false;
+    }
+
+    public void subscribe(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+
+    }
+
+    public void unsubscribe(String receptionPortURI, String channel) throws Exception {
+
+    }
+
+    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        return false;
+    }
 }

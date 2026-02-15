@@ -18,12 +18,11 @@ public class BrokerReceivingOutboundPort extends AbstractOutboundPort implements
 
     @Override
     public void receive(String channel, MessageI message) throws Exception {
-        (ReceivingConnector) this.getConnector() .
-        //todo
+        ((ReceivingConnector) this.getConnector()).receive(channel, message);
     }
 
     @Override
     public void receive(String channel, MessageI[] messages) throws Exception {
-        //todo
+        ((ReceivingConnector) this.getConnector()).receive(channel, messages);
     }
 }
