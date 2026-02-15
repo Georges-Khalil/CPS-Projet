@@ -3,6 +3,7 @@ package fr.sorbonne_u.cps.pubsub.composants;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
+import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
@@ -38,6 +39,25 @@ public class Eolienne extends AbstractComponent implements ClientI {
         // TODO !!!
         // J'imagine qu'on se register et qu'on loop sur des receive bloquants?
     }
+
+    @Override
+    public synchronized void finalise() throws Exception {
+        // On déconnecte les OUTBOUND_PORT donc pas le RECEIVE_PORT car il est INBOUND
+        this.doPortDisconnection(REGISTRATION_PORT_URI);
+        super.finalise();
+    }
+
+    @Override
+    public synchronized void shutdown() throws ComponentShutdownException {
+        try {
+            this.registration_port.unpublishPort();
+            this.registration_port.unpublishPort();
+        } catch (Exception e) {
+            throw new ComponentShutdownException(e);
+        }
+        super.shutdown();
+    }
+
 
     @Override
     public void receive_one(String channel, MessageI message) {
