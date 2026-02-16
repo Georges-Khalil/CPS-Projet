@@ -1,8 +1,6 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
-import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.components.examples.ddeployment_cs.components.DynamicURIConsumer;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
 
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
@@ -14,17 +12,17 @@ import java.util.ArrayList;
 /**
  *  Ce port implémente PublishingCI en tant que RequiredCI
  */
-public class BrokerPublishingInboundPort extends AbstractInboundPort implements PublishingCI {
+public class PublishingInboundPort extends AbstractInboundPort implements PublishingCI {
 
     // private static final long serialVersionUID = 1L;
 
-    public BrokerPublishingInboundPort(ComponentI owner) throws Exception {
+    public PublishingInboundPort(ComponentI owner) throws Exception {
         super(PublishingCI.class, owner);
         assert owner instanceof Broker;
     }
 
     // Facultatif, on peut imposer une URI
-    public BrokerPublishingInboundPort(String uri, ComponentI owner) throws Exception {
+    public PublishingInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PublishingCI.class, owner);
         assert owner instanceof Broker;
     }

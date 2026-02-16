@@ -9,15 +9,15 @@ import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 /**
  * Utilisé par tous les composants sauf le courtier, pour s'enregistrer auprès du courtier.
  */
-public class BrokerRegistrationInboundPort extends AbstractInboundPort implements RegistrationCI {
+public class RegistrationInboundPort extends AbstractInboundPort implements RegistrationCI {
 
 
-    public BrokerRegistrationInboundPort(ComponentI owner) throws Exception {
+    public RegistrationInboundPort(ComponentI owner) throws Exception {
         super(RegistrationCI.class, owner);
         assert owner instanceof Broker;
     }
 
-    public BrokerRegistrationInboundPort(String uri, ComponentI owner) throws Exception {
+    public RegistrationInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, RegistrationCI.class, owner);
         assert owner instanceof Broker;
     }
