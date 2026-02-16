@@ -16,10 +16,12 @@ public class ClientReceivingInboundPort extends AbstractInboundPort implements R
 
     public ClientReceivingInboundPort(ComponentI owner) throws Exception {
         super(ReceivingCI.class, owner);
+        assert owner instanceof ClientI;
     }
 
     public ClientReceivingInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, ReceivingCI.class, owner);
+        assert owner instanceof ClientI;
     }
 
     @Override
