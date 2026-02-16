@@ -35,6 +35,14 @@ public class Eolienne extends AbstractComponent implements ClientI {
         this.registration_port = new ClientRegistrationOutboundPort(registration_port_uri, this);
         this.REGISTRATION_PORT_URI = registration_port_uri;
         this.registration_port.publishPort();
+
+        /*
+        // Idée de création de port automatique, sans avoir a les nommer
+        this.registration_port = new ClientRegistrationOutboundPort(this);
+        this.REGISTRATION_PORT_URI = this.registration_port.getClientPortURI();
+        this.registration_port.publishPort();
+
+         */
     }
 
     @Override
