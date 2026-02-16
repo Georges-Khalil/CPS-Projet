@@ -54,15 +54,26 @@ public class Bureau extends AbstractComponent implements ClientI {
         // Attendre que les abonnes soient prets
         Thread.sleep(3000);
 
-        // Publier un message simple d'alerte meteo
-        Message msg = new Message();
-        msg.putProperty("type", "alert");
-        msg.putProperty("alertType", "STORM");
-        msg.putProperty("level", "ORANGE");
-        msg.setPayload("Alerte tempete emise par " + RECEIVE_PORT_URI);
+        // Publier un premier message d'alerte meteo sur channel1
+        Message msg1 = new Message();
+        msg1.putProperty("type", "alert");
+        msg1.putProperty("alertType", "STORM");
+        msg1.putProperty("level", "ORANGE");
+        msg1.setPayload("Alerte tempete emise par " + RECEIVE_PORT_URI);
 
-        this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg);
+        this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg1);
         this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": alerte publiee sur channel1\n");
+
+        // Publier un second message d'alerte sur channel0
+        // Ce message sera filtré et accepté par l'éolienne (filtre type=alert)
+        Message msg2 = new Message();
+        msg2.putProperty("type", "alerte-petite");
+        msg2.putProperty("alertType", "WIND");
+        msg2.putProperty("level", "ROUGE");
+        msg2.setPayload("Alerte vent violent emise par " + RECEIVE_PORT_URI);
+
+        this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg2);
+        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": petite alerte publiee sur channel1\n");
     }
 
     @Override
