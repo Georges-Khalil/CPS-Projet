@@ -21,8 +21,20 @@ public class Message implements MessageI {
 		this.timestamp = Instant.now();
 		this.payload = null;
 	}
+
+  public Message(Serializable payload, Instant timestamp) {
+    this.timestamp = timestamp;
+    this.properties = new ArrayList<>();
+    this.payload = payload;
+  }
+
+  public Message(Serializable payload) {
+    this.timestamp = Instant.now();
+    this.properties = new ArrayList<>();
+    this.payload = payload;
+  }
 	
-	private Message(Instant timestamp, List<PropertyI> properties) {
+	public Message(Instant timestamp, List<PropertyI> properties) {
 		this.timestamp = timestamp;
 		this.properties = new ArrayList<>(properties);
 		this.payload = null;
