@@ -174,7 +174,7 @@ public class Broker extends AbstractComponent {
         }
     }
 
-    public boolean channelExists(String channel) throws Exception {
+    public boolean channelExist(String channel) throws Exception {
         return channels.contains(channel);
     }
 
@@ -217,4 +217,8 @@ public class Broker extends AbstractComponent {
         }
         return false;
     }
+
+  public Boolean channelAuthorised(String uri,String channel) {
+      return false; // TODO
+  }
 }

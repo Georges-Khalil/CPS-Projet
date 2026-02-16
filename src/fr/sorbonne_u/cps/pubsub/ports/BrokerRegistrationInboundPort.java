@@ -1,10 +1,6 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
-import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.components.examples.chm.components.ConcurrentMapComponent;
-import fr.sorbonne_u.components.examples.ddeployment_cs.components.DynamicURIConsumer;
-import fr.sorbonne_u.components.interfaces.OfferedCI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
@@ -74,10 +70,16 @@ public class BrokerRegistrationInboundPort extends AbstractInboundPort implement
                 } );
     }
 
-    @Override
-    public boolean channelExists(String channel) throws Exception {
+  @Override
+  public boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
+    return this.getOwner().handleRequest(
+            c -> ((Broker) c).channelAuthorised(receptionPortURI, channel));
+  }
+
+  @Override
+    public boolean channelExist(String channel) throws Exception {
         return this.getOwner().handleRequest(
-                c -> ((Broker) c).channelExists(channel));
+                c -> ((Broker) c).channelExist(channel));
     }
 
     @Override

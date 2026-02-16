@@ -35,11 +35,16 @@ public class RegistrationConnector
     }
 
     @Override
-    public boolean channelExists(String channel) throws Exception {
-        return ((RegistrationCI) this.offering).channelExists(channel);
+    public boolean channelExist(String channel) throws Exception {
+        return ((RegistrationCI) this.offering).channelExist(channel);
     }
 
-    @Override
+  @Override
+  public boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
+    return ((RegistrationCI) this.offering).channelAuthorised(receptionPortURI, channel);
+  }
+
+  @Override
     public boolean subscribed(String receptionPortURI, String channel) throws Exception {
         return ((RegistrationCI) this.offering).subscribed(receptionPortURI, channel);
     }
