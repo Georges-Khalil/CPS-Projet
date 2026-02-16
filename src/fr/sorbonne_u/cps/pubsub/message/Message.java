@@ -30,7 +30,7 @@ public class Message implements MessageI {
 	
 	@Override
 	public boolean propertyExists(String name) {
-		if (name != null && !name.isEmpty()) return false;
+		if (name == null || name.isEmpty()) return false;
 		for (PropertyI p : properties) {
 			if (p.getName().equals(name)) {
 				return true;

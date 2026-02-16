@@ -2,107 +2,117 @@ package fr.sorbonne_u.cps.pubsub;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
-import fr.sorbonne_u.components.examples.basic_cs.connections.URIServiceConnector;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.composants.Bureau;
 import fr.sorbonne_u.cps.pubsub.composants.Eolienne;
 import fr.sorbonne_u.cps.pubsub.composants.Station;
 import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
-import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 
-public class CVM
-        extends AbstractCVM {
+public class CVM extends AbstractCVM {
+
+    // Éolienne 1
+    public static final String EOLIENNE_RECEIVE_1 = "eolienne-receive-1";
+    public static final String EOLIENNE_REGISTRATION_1 = "eolienne-register-1";
+
+    // Station 1
+    public static final String STATION_RECEIVE_1 = "station-receive-1";
+    public static final String STATION_PUBLISH_1 = "station-publish-1";
+    public static final String STATION_REGISTRATION_1 = "station-register-1";
+
+    // Station 2
+    public static final String STATION_RECEIVE_2 = "station-receive-2";
+    public static final String STATION_PUBLISH_2 = "station-publish-2";
+    public static final String STATION_REGISTRATION_2 = "station-register-2";
+
+    // Bureau 1
+    public static final String BUREAU_RECEIVE_1 = "bureau-receive-1";
+    public static final String BUREAU_PUBLISH_1 = "bureau-publish-1";
+    public static final String BUREAU_REGISTRATION_1 = "bureau-register-1";
 
     public CVM() throws Exception {
         super();
     }
 
-    /** URI inbound receive d'une éolienne.						*/
-    public final static String	EOLIENNE_RECEIVE_1 = "éolienne_receive_1" ;
-    /** URI outbound registration d'une éolienne.						*/
-    public final static String	EOLIENNE_REGISTRATION_1 = "éolienne_register_1" ;
-
-    /** URI outbound publish d'une station.						*/
-    public final static String	STATION_PUBLISH_1 = "station_publish_1" ;
-    /** URI outbound registration d'une station.						*/
-    public final static String	STATION_REGISTRATION_1 = "station_register_1" ;
-
-
     @Override
-    public void			deploy() throws Exception {
+    public void deploy() throws Exception {
 
-        // ---------------------------------------------------------------------
-        // Creation phase
-        // ---------------------------------------------------------------------
+        // ----- Création des composants -----
 
-        // Composant courtier :
-        String Courtier =
-                AbstractComponent.createComponent(
-                        Broker.class.getCanonicalName(), // nom de la classe
-                        new Object[]{}  // pas de paramètres pour ce constructeur
-                );
-        this.toggleTracing(Courtier);
+        String courtier = AbstractComponent.createComponent(
+                Broker.class.getCanonicalName(),
+                new Object[]{}
+        );
+        this.toggleTracing(courtier);
 
-        // Un composant eolienne :
-        String Eolienne_1 =
-                AbstractComponent.createComponent(
-                        Eolienne.class.getCanonicalName(),
-                        new Object[]{EOLIENNE_RECEIVE_1, EOLIENNE_REGISTRATION_1}
-                );
-        this.toggleTracing(Eolienne_1);
-        // Un composant station météo :
-        String Station_1 =
-                AbstractComponent.createComponent(
-                        Station.class.getCanonicalName(),
-                        new Object[]{STATION_PUBLISH_1, STATION_REGISTRATION_1}
-                );
-        this.toggleTracing(Station_1);
+        String eolienne1 = AbstractComponent.createComponent(
+                Eolienne.class.getCanonicalName(),
+                new Object[]{EOLIENNE_RECEIVE_1, EOLIENNE_REGISTRATION_1}
+        );
+        this.toggleTracing(eolienne1);
 
+        String station1 = AbstractComponent.createComponent(
+                Station.class.getCanonicalName(),
+                new Object[]{STATION_RECEIVE_1, STATION_PUBLISH_1, STATION_REGISTRATION_1}
+        );
+        this.toggleTracing(station1);
 
-        // ---------------------------------------------------------------------
-        // Connection phase
-        // ---------------------------------------------------------------------
+        String station2 = AbstractComponent.createComponent(
+                Station.class.getCanonicalName(),
+                new Object[]{STATION_RECEIVE_2, STATION_PUBLISH_2, STATION_REGISTRATION_2}
+        );
+        this.toggleTracing(station2);
 
-        // Publish :
-        this.doPortConnection(
-                Station_1,
-                STATION_PUBLISH_1,
+        String bureau1 = AbstractComponent.createComponent(
+                Bureau.class.getCanonicalName(),
+                new Object[]{BUREAU_RECEIVE_1, BUREAU_PUBLISH_1, BUREAU_REGISTRATION_1}
+        );
+        this.toggleTracing(bureau1);
+
+        // ----- Connexions Registration (client -> courtier) -----
+
+        this.doPortConnection(eolienne1, EOLIENNE_REGISTRATION_1,
+                Broker.BROKER_REGISTRATION_URI,
+                RegistrationConnector.class.getCanonicalName());
+
+        this.doPortConnection(station1, STATION_REGISTRATION_1,
+                Broker.BROKER_REGISTRATION_URI,
+                RegistrationConnector.class.getCanonicalName());
+
+        this.doPortConnection(station2, STATION_REGISTRATION_2,
+                Broker.BROKER_REGISTRATION_URI,
+                RegistrationConnector.class.getCanonicalName());
+
+        this.doPortConnection(bureau1, BUREAU_REGISTRATION_1,
+                Broker.BROKER_REGISTRATION_URI,
+                RegistrationConnector.class.getCanonicalName());
+
+        // ----- Connexions Publishing (station/bureau -> courtier) -----
+
+        this.doPortConnection(station1, STATION_PUBLISH_1,
                 Broker.BROKER_PUBLISH_URI,
                 PublishingConnector.class.getCanonicalName());
-        // Receive :
-        this.doPortConnection(
-                Courtier,
-                Broker.BROKER_RECEIVE_URI.get(0), // TODO: Obtenir l'uri de connection vers eolienne_1.
-                EOLIENNE_RECEIVE_1,
-                ReceivingConnector.class.getCanonicalName()
-        );
-        // Registration Eolienne :
-        this.doPortConnection(
-                Eolienne_1,
-                EOLIENNE_REGISTRATION_1,
-                Broker.BROKER_REGISTRATION_URI,
-                RegistrationConnector.class.getCanonicalName()
-        );
-        // Registration Station :
-        this.doPortConnection(
-                Station_1,
-                STATION_REGISTRATION_1,
-                Broker.BROKER_REGISTRATION_URI,
-                RegistrationConnector.class.getCanonicalName()
-        );
 
-        // --------------------------------------------------------------------
-        // Deployment done
-        // --------------------------------------------------------------------
+        this.doPortConnection(station2, STATION_PUBLISH_2,
+                Broker.BROKER_PUBLISH_URI,
+                PublishingConnector.class.getCanonicalName());
+
+        this.doPortConnection(bureau1, BUREAU_PUBLISH_1,
+                Broker.BROKER_PUBLISH_URI,
+                PublishingConnector.class.getCanonicalName());
+
+        // Les connexions Receive (courtier -> clients) sont créées dynamiquement
+        // par le courtier lors de register()
+
         super.deploy();
     }
 
-    public static void		main(String[] args) {
+    public static void main(String[] args) {
         try {
             CVM cvm = new CVM();
-            cvm.startStandardLifeCycle(60000L) ;
-            Thread.sleep(5000L) ;
-            System.exit(0) ;
+            cvm.startStandardLifeCycle(120000L);
+            Thread.sleep(10000L);
+            System.exit(0);
         } catch (Throwable e) {
             e.printStackTrace();
         }

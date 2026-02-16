@@ -33,8 +33,8 @@ public class BrokerPublishingInboundPort extends AbstractInboundPort implements 
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).publish(this.getPortURI(), channel, message);
-                    return null; // Parce que on ne peut pas return void
+                    ((Broker) c).publish(receptionPortURI, channel, message);
+                    return null;
                 });
         /*
         // Les exemples proposent cette implémentation :
@@ -57,8 +57,8 @@ public class BrokerPublishingInboundPort extends AbstractInboundPort implements 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).publish(this.getPortURI(), channel, messages);
-                    return null; // Parce que on ne peut pas return void
+                    ((Broker) c).publish(receptionPortURI, channel, messages);
+                    return null;
                 });
 
         /*
