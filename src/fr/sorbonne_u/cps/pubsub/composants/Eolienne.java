@@ -20,16 +20,16 @@ public class Eolienne extends AbstractComponent implements ClientI {
     protected ClientRegistrationOutboundPort registration_port;
     private final String REGISTRATION_PORT_URI;
 
-    protected Eolienne() throws Exception {
+    protected Eolienne(String receive_port_uri, String registration_port_uri) throws Exception {
 
         super(1,0); // Pour l'instant
         // Publish:
-        this.receive_port = new ClientReceivingInboundPort(this); // URI CRÉÉE AUTOMATIQUEMENT ICI
-        this.RECEIVE_PORT_URI = this.receive_port.getPortURI();
+        this.receive_port = new ClientReceivingInboundPort(receive_port_uri, this);
+        this.RECEIVE_PORT_URI = receive_port_uri;
         this.receive_port.publishPort();
         // Registration:
-        this.registration_port = new ClientRegistrationOutboundPort(this);
-        this.REGISTRATION_PORT_URI = this.registration_port.getPortURI();
+        this.registration_port = new ClientRegistrationOutboundPort(registration_port_uri, this);
+        this.REGISTRATION_PORT_URI = registration_port_uri;
         this.registration_port.publishPort();
     }
 
@@ -69,10 +69,4 @@ public class Eolienne extends AbstractComponent implements ClientI {
         // Todo
     }
 
-    public String getRECEIVE_PORT_URI() {
-        return RECEIVE_PORT_URI;
-    }
-    public String getREGISTRATION_PORT_URI() {
-        return REGISTRATION_PORT_URI;
-    }
 }

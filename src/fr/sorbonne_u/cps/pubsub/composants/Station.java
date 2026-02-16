@@ -20,15 +20,15 @@ public class Station extends AbstractComponent /*implements ClientI*/ {
     protected ClientRegistrationOutboundPort registration_port;
     private final String REGISTRATION_PORT_URI;
 
-    protected Station() throws Exception {
+    protected Station(String publish_port_uri, String registration_port_uri) throws Exception {
         super(1,0); // Pour l'instant
         // Publish:
-        this.publish_port = new ClientPublishingOutboundPort(this); // URI CRÉÉE AUTOMATIQUEMENT ICI
-        this.PUBLISH_PORT_URI = this.publish_port.getPortURI();
+        this.publish_port = new ClientPublishingOutboundPort(publish_port_uri, this);
+        this.PUBLISH_PORT_URI = publish_port_uri;
         this.publish_port.publishPort();
         // Registration:
-        this.registration_port = new ClientRegistrationOutboundPort(this);
-        this.REGISTRATION_PORT_URI = this.registration_port.getPortURI();
+        this.registration_port = new ClientRegistrationOutboundPort(registration_port_uri, this);
+        this.REGISTRATION_PORT_URI = registration_port_uri;
         this.registration_port.publishPort();
     }
 
