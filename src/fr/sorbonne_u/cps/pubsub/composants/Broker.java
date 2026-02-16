@@ -21,7 +21,7 @@ import java.util.Set;
  * Offre: PublishingCI et RegistrationCI
  * Requiert: ReceivingCI
  */
-@OfferedInterfaces(offered = {PublishingCI.class, RegistrationCI.class})
+@OfferedInterfaces(offered = {PublishingCI.class, RegistrationCI.class, PrivilegedClientCI.class})
 @RequiredInterfaces(required = {ReceivingCI.class})
 public class Broker extends AbstractComponent {
 
@@ -221,4 +221,7 @@ public class Broker extends AbstractComponent {
   public Boolean channelAuthorised(String uri,String channel) {
       return false; // TODO
   }
+
+  // Todo: Fonctions pour Privileged Client:
+    // ...
 }
