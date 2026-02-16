@@ -10,8 +10,8 @@ import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.filters.PropertyFilter;
 import fr.sorbonne_u.cps.pubsub.filters.valuefilters.OneValueFilter;
-import fr.sorbonne_u.cps.pubsub.ports.ClientReceivingInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.ClientRegistrationOutboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
 
 /**
  * L'éolienne s'abonne aux canaux et reçoit les messages (vent, alertes).
@@ -20,19 +20,19 @@ import fr.sorbonne_u.cps.pubsub.ports.ClientRegistrationOutboundPort;
 @RequiredInterfaces(required = {RegistrationCI.class})
 public class Eolienne extends AbstractComponent implements ClientI {
 
-    protected ClientReceivingInboundPort receive_port;
+    protected ReceivingInboundPort receive_port;
     private final String RECEIVE_PORT_URI;
-    protected ClientRegistrationOutboundPort registration_port;
+    protected RegistrationOutboundPort registration_port;
     private final String REGISTRATION_PORT_URI;
 
     protected Eolienne(String receive_port_uri, String registration_port_uri) throws Exception {
         super(1, 0);
         // Receive:
-        this.receive_port = new ClientReceivingInboundPort(receive_port_uri, this);
+        this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
         this.RECEIVE_PORT_URI = receive_port_uri;
         this.receive_port.publishPort();
         // Registration:
-        this.registration_port = new ClientRegistrationOutboundPort(registration_port_uri, this);
+        this.registration_port = new RegistrationOutboundPort(registration_port_uri, this);
         this.REGISTRATION_PORT_URI = registration_port_uri;
         this.registration_port.publishPort();
 

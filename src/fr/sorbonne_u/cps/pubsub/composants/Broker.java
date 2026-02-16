@@ -6,9 +6,9 @@ import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
 import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
-import fr.sorbonne_u.cps.pubsub.ports.BrokerPublishingInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.BrokerRegistrationInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.BrokerReceivingOutboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.PublishingInboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,9 +26,9 @@ import java.util.Set;
 public class Broker extends AbstractComponent {
 
     public static final String BROKER_PUBLISH_URI = "broker-publish";
-    protected BrokerPublishingInboundPort bpip;
+    protected PublishingInboundPort bpip;
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
-    protected BrokerRegistrationInboundPort brip;
+    protected RegistrationInboundPort brip;
 
     /** Nombre de canaux prédéfinis pour les clients FREE. */
     public static final int NB_FREE_CHANNELS = 3;
@@ -36,7 +36,7 @@ public class Broker extends AbstractComponent {
     /** Clients enregistrés : receptionPortURI -> classe de service. */
     private final Map<String, RegistrationCI.RegistrationClass> registeredClients = new HashMap<>();
     /** Ports sortants vers les clients : receptionPortURI -> outbound port. */
-    private final Map<String, BrokerReceivingOutboundPort> clientOutboundPorts = new HashMap<>();
+    private final Map<String, ReceivingOutboundPort> clientOutboundPorts = new HashMap<>();
     /** Ensemble des canaux existants. */
     private final Set<String> channels = new HashSet<>();
     /** Abonnements : canal -> (receptionPortURI -> filtre). */
@@ -44,8 +44,8 @@ public class Broker extends AbstractComponent {
 
     protected Broker() throws Exception {
         super(1, 0);
-        this.bpip = new BrokerPublishingInboundPort(BROKER_PUBLISH_URI, this);
-        this.brip = new BrokerRegistrationInboundPort(BROKER_REGISTRATION_URI, this);
+        this.bpip = new PublishingInboundPort(BROKER_PUBLISH_URI, this);
+        this.brip = new RegistrationInboundPort(BROKER_REGISTRATION_URI, this);
         this.bpip.publishPort();
         this.brip.publishPort();
 
@@ -64,7 +64,7 @@ public class Broker extends AbstractComponent {
 
     @Override
     public synchronized void finalise() throws Exception {
-        for (BrokerReceivingOutboundPort port : clientOutboundPorts.values()) {
+        for (ReceivingOutboundPort port : clientOutboundPorts.values()) {
             this.doPortDisconnection(port.getPortURI());
         }
         super.finalise();
@@ -75,7 +75,7 @@ public class Broker extends AbstractComponent {
         try {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
-            for (BrokerReceivingOutboundPort port : clientOutboundPorts.values()) {
+            for (ReceivingOutboundPort port : clientOutboundPorts.values()) {
                 port.unpublishPort();
             }
         } catch (Exception e) {
@@ -100,7 +100,7 @@ public class Broker extends AbstractComponent {
             MessageFilterI filter = entry.getValue();
 
             if (filter == null || filter.match(message)) {
-                BrokerReceivingOutboundPort outPort = clientOutboundPorts.get(subscriberURI);
+                ReceivingOutboundPort outPort = clientOutboundPorts.get(subscriberURI);
                 if (outPort != null) {
                     this.traceMessage("Broker: livraison à " + subscriberURI + "\n");
                     outPort.receive(channel, message);
@@ -136,7 +136,7 @@ public class Broker extends AbstractComponent {
         registeredClients.put(receptionPortURI, rc);
 
         // Créer un port sortant pour envoyer des messages à ce client
-        BrokerReceivingOutboundPort outPort = new BrokerReceivingOutboundPort(this);
+        ReceivingOutboundPort outPort = new ReceivingOutboundPort(this);
         outPort.publishPort();
         this.doPortConnection(
                 outPort.getPortURI(),
@@ -166,7 +166,7 @@ public class Broker extends AbstractComponent {
             subs.remove(receptionPortURI);
         }
 
-        BrokerReceivingOutboundPort outPort = clientOutboundPorts.remove(receptionPortURI);
+        ReceivingOutboundPort outPort = clientOutboundPorts.remove(receptionPortURI);
         if (outPort != null) {
             this.doPortDisconnection(outPort.getPortURI());
             outPort.unpublishPort();

@@ -10,12 +10,12 @@ import java.util.ArrayList;
 /**
  *  Ce port implémente PublishingCI en tant que OfferedCI
  */
-public class ClientPublishingOutboundPort extends AbstractOutboundPort implements PublishingCI {
-    public ClientPublishingOutboundPort(String uri, ComponentI owner) throws Exception {
+public class PublishingOutboundPort extends AbstractOutboundPort implements PublishingCI {
+    public PublishingOutboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PublishingCI.class, owner);
     }
 
-    public ClientPublishingOutboundPort(ComponentI owner) throws Exception {
+    public PublishingOutboundPort(ComponentI owner) throws Exception {
         super(PublishingCI.class, owner);
     }
 

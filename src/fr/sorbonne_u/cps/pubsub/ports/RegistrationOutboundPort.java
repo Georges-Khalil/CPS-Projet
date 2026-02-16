@@ -3,17 +3,16 @@ package fr.sorbonne_u.cps.pubsub.ports;
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
-import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
 
-public class ClientRegistrationOutboundPort extends AbstractOutboundPort implements RegistrationCI  {
+public class RegistrationOutboundPort extends AbstractOutboundPort implements RegistrationCI  {
 
-    public ClientRegistrationOutboundPort(String uri, ComponentI owner) throws Exception {
+    public RegistrationOutboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, RegistrationCI.class, owner);
     }
 
-    public ClientRegistrationOutboundPort(ComponentI owner) throws Exception {
+    public RegistrationOutboundPort(ComponentI owner) throws Exception {
         super(RegistrationCI.class, owner);
     }
 

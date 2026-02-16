@@ -9,9 +9,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
-import fr.sorbonne_u.cps.pubsub.ports.ClientPublishingOutboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.ClientReceivingInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.ClientRegistrationOutboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
+import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
 
 /**
  * Le bureau météorologique publie des alertes météo sur le système pub/sub.
@@ -20,25 +20,25 @@ import fr.sorbonne_u.cps.pubsub.ports.ClientRegistrationOutboundPort;
 @RequiredInterfaces(required = {PublishingCI.class, RegistrationCI.class})
 public class Bureau extends AbstractComponent implements ClientI {
 
-    protected ClientReceivingInboundPort receive_port;
+    protected ReceivingInboundPort receive_port;
     private final String RECEIVE_PORT_URI;
-    protected ClientPublishingOutboundPort publish_port;
+    protected PublishingOutboundPort publish_port;
     private final String PUBLISH_PORT_URI;
-    protected ClientRegistrationOutboundPort registration_port;
+    protected RegistrationOutboundPort registration_port;
     private final String REGISTRATION_PORT_URI;
 
     protected Bureau(String receive_port_uri, String publish_port_uri, String registration_port_uri) throws Exception {
         super(1, 0);
         // Receive:
-        this.receive_port = new ClientReceivingInboundPort(receive_port_uri, this);
+        this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
         this.RECEIVE_PORT_URI = receive_port_uri;
         this.receive_port.publishPort();
         // Publish:
-        this.publish_port = new ClientPublishingOutboundPort(publish_port_uri, this);
+        this.publish_port = new PublishingOutboundPort(publish_port_uri, this);
         this.PUBLISH_PORT_URI = publish_port_uri;
         this.publish_port.publishPort();
         // Registration:
-        this.registration_port = new ClientRegistrationOutboundPort(registration_port_uri, this);
+        this.registration_port = new RegistrationOutboundPort(registration_port_uri, this);
         this.REGISTRATION_PORT_URI = registration_port_uri;
         this.registration_port.publishPort();
     }
