@@ -4,7 +4,7 @@ import com.sun.corba.se.impl.io.TypeMismatchException;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
 
 /**
- * @author Jules Ragu
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class Position implements PositionI {
 

@@ -4,7 +4,7 @@ import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
 import fr.sorbonne_u.cps.meteo.interfaces.WindDataI;
 
 /**
- * @author Jules Ragu
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class WindData implements WindDataI {
 
@@ -12,6 +12,8 @@ public class WindData implements WindDataI {
   private final double x, y;
 
   public WindData(final PositionI position, double x, double y) {
+    if (position == null)
+      throw new IllegalArgumentException();
     this.position = position;
     this.x = x;
     this.y = y;

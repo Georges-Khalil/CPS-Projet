@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.Arrays;
 
 /**
- * @author Jules Ragu
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class MeteoAlert implements MeteoAlertI {
 
@@ -23,8 +23,8 @@ public class MeteoAlert implements MeteoAlertI {
   private final Duration duration;
 
   public MeteoAlert(AlertTypeI type, LevelI level, RegionI[] regions, Instant start_time, Duration duration) {
-    assert type != null && level != null && start_time != null && duration != null;
-    assert regions != null && regions.length > 1;
+    if (type == null || level == null || start_time == null || duration == null || regions == null || regions.length == 0)
+      throw new IllegalArgumentException();
 
     this.type = type;
     this.level = level;
