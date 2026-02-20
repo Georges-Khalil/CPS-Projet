@@ -11,8 +11,8 @@ public class PropertyFilter implements PropertyFilterI {
 	private final ValueFilterI valueFilter;
 	
 	public PropertyFilter(String name, ValueFilterI valueFilter) {
-		assert name != null && !name.isEmpty();
-		assert valueFilter != null;
+    if (name == null || valueFilter == null || name.isEmpty())
+      throw new IllegalArgumentException();
 		this.name = name;
 		this.valueFilter = valueFilter;
 	}
@@ -29,12 +29,8 @@ public class PropertyFilter implements PropertyFilterI {
 	
 	@Override
 	public boolean match(PropertyI property) {
-		if (property == null) {
-			return false;
-		}
-		if (!name.equals(property.getName())) {
-			return false;
-		}
-		return valueFilter.match(property.getValue());
+		if (property == null)
+			throw new IllegalArgumentException();
+		return name.equals(property.getName()) && valueFilter.match(property.getValue());
 	}
 }
