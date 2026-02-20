@@ -1,7 +1,5 @@
 package fr.sorbonne_u.cps.pubsub.filters;
 
-import java.util.ArrayList;
-import java.util.List;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
@@ -26,7 +24,7 @@ public class MessageFilter implements MessageFilterI {
 	                     TimeFilterI timeFilter) {
 		this.propertyFilters = propertyFilters != null ? propertyFilters : new PropertyFilterI[0];
 		this.propertiesFilters = propertiesFilters != null ? propertiesFilters : new PropertiesFilterI[0];
-		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.joker();
+		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.acceptAny();
 	}
 	
 	@Override
