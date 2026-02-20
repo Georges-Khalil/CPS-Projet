@@ -1,6 +1,7 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
 import fr.sorbonne_u.components.ComponentI;
+import fr.sorbonne_u.components.interfaces.OfferedCI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
 
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
@@ -21,9 +22,27 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
         assert owner instanceof Broker;
     }
 
+    // Constructeur utilisé par PrivilegedClientInboundPort
+    protected PublishingInboundPort(
+            Class<? extends OfferedCI> implementedInterface,
+            ComponentI owner
+    ) throws Exception {
+        super(implementedInterface, owner);
+        assert owner instanceof Broker;
+    }
+
     // Facultatif, on peut imposer une URI
     public PublishingInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PublishingCI.class, owner);
+        assert owner instanceof Broker;
+    }
+    // Constructeur utilisé par PrivilegedClientInboundPort
+    protected PublishingInboundPort(
+            String uri,
+            Class<? extends OfferedCI> implementedInterface,
+            ComponentI owner
+    ) throws Exception {
+        super(uri, implementedInterface, owner);
         assert owner instanceof Broker;
     }
 

@@ -17,12 +17,12 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     // private static final long serialVersionUID = 1L;
 
     public PrivilegedClientInboundPort(ComponentI owner) throws Exception {
-        super(owner);
+        super(PrivilegedClientCI.class, owner);
     }
 
     // Facultatif, on peut imposer une URI
     public PrivilegedClientInboundPort(String uri, ComponentI owner) throws Exception {
-        super(uri, owner);
+        super(uri, PrivilegedClientCI.class, owner);
     }
 
     // todo: Remplir les fn en bas:

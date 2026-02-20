@@ -1,6 +1,8 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
 import fr.sorbonne_u.components.ComponentI;
+import fr.sorbonne_u.components.interfaces.OfferedCI;
+import fr.sorbonne_u.components.interfaces.RequiredCI;
 import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
@@ -17,6 +19,14 @@ public class PublishingOutboundPort extends AbstractOutboundPort implements Publ
 
     public PublishingOutboundPort(ComponentI owner) throws Exception {
         super(PublishingCI.class, owner);
+    }
+
+    protected PublishingOutboundPort(String uri, Class<? extends RequiredCI> implementedInterface, ComponentI owner) throws Exception {
+        super(uri, implementedInterface, owner);
+    }
+
+    protected PublishingOutboundPort(Class<? extends RequiredCI> implementedInterface, ComponentI owner) throws Exception {
+        super(implementedInterface, owner);
     }
 
     @Override

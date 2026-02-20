@@ -14,11 +14,11 @@ import java.util.ArrayList;
 public class PrivilegedClientOutboundPort extends PublishingOutboundPort implements PrivilegedClientCI {
     // TODO: Vérifier, peut-on extend PublishingOutboundPort? N'y a-t-il pas des problèmes dans le calcul d'instances
     public PrivilegedClientOutboundPort(String uri, ComponentI owner) throws Exception {
-        super(uri, owner);
+        super(uri, PrivilegedClientCI.class, owner);
     }
 
     public PrivilegedClientOutboundPort(ComponentI owner) throws Exception {
-        super(owner);
+        super(PrivilegedClientCI.class, owner);
     }
 
     // Todo: remplir les fns:

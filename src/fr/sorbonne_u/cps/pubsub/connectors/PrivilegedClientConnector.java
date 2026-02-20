@@ -8,20 +8,21 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import java.util.ArrayList;
 
 public class PrivilegedClientConnector
-        extends AbstractConnector
+        extends PublishingConnector
         implements PrivilegedClientCI
 {
 
-    @Override
-    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
-        ((PrivilegedClientCI) this.offering).publish(receptionPortURI, channel, message);
-
-    }
-
-    @Override
-    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
-        ((PrivilegedClientCI) this.offering).publish(receptionPortURI, channel, messages);
-    }
+//    Si jamais on doit cast en tant que PrivilegedClientCI et pas en tant que PublishingCI
+//    @Override
+//    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
+//        ((PrivilegedClientCI) this.offering).publish(receptionPortURI, channel, message);
+//
+//    }
+//
+//    @Override
+//    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
+//        ((PrivilegedClientCI) this.offering).publish(receptionPortURI, channel, messages);
+//    }
 
     @Override
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
