@@ -12,7 +12,7 @@ public class ComparableValueFilter implements ValueFilterI {
 	
 	private final Serializable referenceValue;
 	private final Operator operator;
-	
+
 	public ComparableValueFilter(Serializable referenceValue, Operator operator) {
     if (referenceValue == null || operator == null ||
             (operator != Operator.EQ && operator != Operator.NE && !(referenceValue instanceof Comparable)))
@@ -20,6 +20,10 @@ public class ComparableValueFilter implements ValueFilterI {
 		this.referenceValue = referenceValue;
 		this.operator = operator;
 	}
+
+  public ComparableValueFilter(Serializable referenceValue) {
+    this(referenceValue, Operator.EQ);
+  }
 	
 	@Override
 	@SuppressWarnings("unchecked")
@@ -28,9 +32,9 @@ public class ComparableValueFilter implements ValueFilterI {
       throw new IllegalArgumentException();
 
     if (this.operator == Operator.EQ || this.operator == Operator.NE)
-      return this.referenceValue.equals(value);
+      return this.referenceValue.equals(value) ^ (this.operator == Operator.NE);
 
-    int comparison = ((Comparable<Object>) value).compareTo(referenceValue);
+    int comparison = ((Comparable<Object>) value).compareTo(this.referenceValue);
     switch (operator) {
       case LT: return comparison < 0;
       case LE: return comparison <= 0;

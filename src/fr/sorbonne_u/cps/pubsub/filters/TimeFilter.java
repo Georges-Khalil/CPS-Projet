@@ -11,7 +11,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.TimeFilterI;
 public abstract class TimeFilter implements TimeFilterI {
 	private static final long serialVersionUID = 1L;
 	
-	public static TimeFilterI acceptBefore(Instant from) {
+	public static TimeFilterI acceptAfter(Instant from) {
+    if (from == null)
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
@@ -24,7 +26,9 @@ public abstract class TimeFilter implements TimeFilterI {
 		};
 	}
 	
-	public static TimeFilterI acceptAfter(Instant to) {
+	public static TimeFilterI acceptBefore(Instant to) {
+    if (to == null)
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
@@ -38,6 +42,8 @@ public abstract class TimeFilter implements TimeFilterI {
 	}
 	
 	public static TimeFilterI acceptBetween(Instant from, Instant to) {
+    if (from == null || to == null || to.isBefore(from))
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
@@ -56,7 +62,9 @@ public abstract class TimeFilter implements TimeFilterI {
 
 			@Override
 			public boolean match(Instant timestamp) {
-				return true;
+        if (timestamp == null)
+          throw new IllegalArgumentException();
+        return true;
 			}
 		};
 	}

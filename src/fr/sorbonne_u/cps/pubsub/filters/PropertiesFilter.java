@@ -12,7 +12,7 @@ public class PropertiesFilter implements PropertiesFilterI {
 	private final MultiValuesFilterI multiValuesFilter;
 	
 	public PropertiesFilter(MultiValuesFilterI multiValuesFilter) {
-    if (multiValuesFilter == null || multiValuesFilter.getNames() != null || multiValuesFilter.getNames().length > 0)
+    if (multiValuesFilter == null || multiValuesFilter.getNames() == null || multiValuesFilter.getNames().length == 0)
       throw new IllegalArgumentException();
 		this.multiValuesFilter = multiValuesFilter;
 	}
