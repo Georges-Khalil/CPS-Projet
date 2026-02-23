@@ -4,12 +4,12 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.cps.pubsub.filters.ComparableValueFilter;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.filters.PropertyFilter;
-import fr.sorbonne_u.cps.pubsub.filters.valuefilters.OneValueFilter;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
 
@@ -59,7 +59,7 @@ public class Eolienne extends AbstractComponent implements ClientI {
 
         // S'abonner au channel1 avec un filtre qui n'accepte que les messages avec type=alert
         MessageFilter filter = new MessageFilter(
-            new PropertyFilter("type", new OneValueFilter("alert"))  // N'accepte que les messages avec type=alert
+            new PropertyFilter("type", new ComparableValueFilter("alert"))  // N'accepte que les messages avec type=alert
         );
         this.registration_port.subscribe(RECEIVE_PORT_URI, "channel1", filter);
         this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": abonnee a channel1 avec filtre type=alert\n");

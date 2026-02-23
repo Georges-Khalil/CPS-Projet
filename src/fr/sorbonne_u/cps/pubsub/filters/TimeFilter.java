@@ -11,50 +11,60 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.TimeFilterI;
 public abstract class TimeFilter implements TimeFilterI {
 	private static final long serialVersionUID = 1L;
 	
-	public static TimeFilterI from(Instant from) {
+	public static TimeFilterI acceptAfter(Instant from) {
+    if (from == null)
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
 			@Override
 			public boolean match(Instant timestamp) {
-				assert timestamp != null;
+        if (timestamp == null)
+          throw new IllegalArgumentException();
 				return !timestamp.isBefore(from);
 			}
 		};
 	}
 	
-	public static TimeFilterI to(Instant to) {
+	public static TimeFilterI acceptBefore(Instant to) {
+    if (to == null)
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
 			@Override
 			public boolean match(Instant timestamp) {
-				assert timestamp != null;
+        if (timestamp == null)
+          throw new IllegalArgumentException();
 				return !timestamp.isAfter(to);
 			}
 		};
 	}
 	
-	public static TimeFilterI between(Instant from, Instant to) {
+	public static TimeFilterI acceptBetween(Instant from, Instant to) {
+    if (from == null || to == null || to.isBefore(from))
+      throw new IllegalArgumentException();
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 			
 			@Override
 			public boolean match(Instant timestamp) {
-				assert timestamp != null;
+        if (timestamp == null)
+          throw new IllegalArgumentException();
 				return !timestamp.isBefore(from) && !timestamp.isAfter(to);
 			}
 		};
 	}
 	
-	public static TimeFilterI joker() {
+	public static TimeFilterI acceptAny() {
 		return new TimeFilterI() {
 			private static final long serialVersionUID = 1L;
 
-            // TODO: A voir, pour l'instant on accepte toujours comme s'il n'y avait pas de timefilter.
 			@Override
 			public boolean match(Instant timestamp) {
-				return true;
+        if (timestamp == null)
+          throw new IllegalArgumentException();
+        return true;
 			}
 		};
 	}

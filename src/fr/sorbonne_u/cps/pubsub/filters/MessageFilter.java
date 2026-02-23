@@ -1,7 +1,5 @@
 package fr.sorbonne_u.cps.pubsub.filters;
 
-import java.util.ArrayList;
-import java.util.List;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
@@ -12,21 +10,21 @@ public class MessageFilter implements MessageFilterI {
 	private final PropertyFilterI[] propertyFilters;
 	private final PropertiesFilterI[] propertiesFilters;
 	private final TimeFilterI timeFilter;
-	
+
+  public MessageFilter(PropertyFilterI... propertyFilters) {
+    this(null, propertyFilters);
+  }
+
+  public MessageFilter(TimeFilterI timeFilter, PropertyFilterI... propertyFilters) {
+    this(propertyFilters, null, timeFilter);
+  }
+
 	public MessageFilter(PropertyFilterI[] propertyFilters, 
 	                     PropertiesFilterI[] propertiesFilters, 
 	                     TimeFilterI timeFilter) {
 		this.propertyFilters = propertyFilters != null ? propertyFilters : new PropertyFilterI[0];
 		this.propertiesFilters = propertiesFilters != null ? propertiesFilters : new PropertiesFilterI[0];
-		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.joker();
-	}
-	
-	public MessageFilter(PropertyFilterI... propertyFilters) {
-		this(propertyFilters, null, null);
-	}
-	
-	public MessageFilter(TimeFilterI timeFilter, PropertyFilterI... propertyFilters) {
-		this(propertyFilters, null, timeFilter);
+		this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.acceptAny();
 	}
 	
 	@Override
@@ -46,50 +44,28 @@ public class MessageFilter implements MessageFilterI {
 	
 	@Override
 	public boolean match(MessageI message) {
-		if (message == null) {
+		if (message == null)
+      throw new IllegalArgumentException();
+		
+		if (!this.timeFilter.match(message.getTimeStamp()))
 			return false;
-		}
 		
-		if (!timeFilter.match(message.getTimeStamp())) {
-			return false;
-		}
+		PropertyI[] properties = message.getProperties();
 		
-		PropertyI[] messageProperties = message.getProperties();
-		
-		for (PropertyFilterI propertyFilter : propertyFilters) {
-			boolean found = false;
-			for (PropertyI property : messageProperties) {
+		for (PropertyFilterI propertyFilter : this.propertyFilters) {
+			boolean not_found = true;
+			for (PropertyI property : properties)
 				if (propertyFilter.match(property)) {
-					found = true;
+					not_found = false;
 					break;
 				}
-			}
-			if (!found) {
+			if (not_found)
 				return false;
-			}
 		}
 		
-		for (PropertiesFilterI propertiesFilter : propertiesFilters) {
-			String[] requiredNames = propertiesFilter.getMultiValuesFilter().getNames();
-			
-			List<PropertyI> relevantProperties = new ArrayList<>();
-			for (PropertyI property : messageProperties) {
-				for (String name : requiredNames) {
-					if (property.getName().equals(name)) {
-						relevantProperties.add(property);
-						break;
-					}
-				}
-			}
-			
-			if (relevantProperties.size() != requiredNames.length) {
+		for (PropertiesFilterI propertiesFilter : this.propertiesFilters)
+			if (!propertiesFilter.match(properties))
 				return false;
-			}
-			
-			if (!propertiesFilter.match(relevantProperties.toArray(new PropertyI[0]))) {
-				return false;
-			}
-		}
 		
 		return true;
 	}

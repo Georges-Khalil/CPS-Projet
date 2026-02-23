@@ -12,7 +12,9 @@ public class PropertiesFilter implements PropertiesFilterI {
 	private final MultiValuesFilterI multiValuesFilter;
 	
 	public PropertiesFilter(MultiValuesFilterI multiValuesFilter) {
-		this.multiValuesFilter = Objects.requireNonNull(multiValuesFilter, "multiValuesFilter must not be null");
+    if (multiValuesFilter == null || multiValuesFilter.getNames() == null || multiValuesFilter.getNames().length == 0)
+      throw new IllegalArgumentException();
+		this.multiValuesFilter = multiValuesFilter;
 	}
 	
 	@Override
@@ -25,35 +27,24 @@ public class PropertiesFilter implements PropertiesFilterI {
      */
 	@Override
 	public boolean match(PropertyI... properties) {
-		if (properties == null) {
-			return false;
-		}
+		if (properties == null)
+      throw new IllegalArgumentException();
+
 		String[] names = multiValuesFilter.getNames();
-		if (names == null || names.length == 0) {
-			return false;
-		}
 		Serializable[] values = new Serializable[names.length];
-        // On vérifie si on peut trouver les propriétés recherchées, et on en extrait les valeurs.
+
 		for (int i = 0; i < names.length; i++) {
-			String needed = names[i];
-			if (needed == null) {
-				return false;
-			}
 			boolean found = false;
-			for (PropertyI property : properties) {
-				if (property == null) continue;
-				String propName = property.getName();
-				if (needed.equals(propName)) {
+			for (PropertyI property : properties)
+				if (names[i].equals(property.getName())) {
 					values[i] = property.getValue();
 					found = true;
 					break;
 				}
-			}
-			if (!found) {
+			if (!found)
 				return false;
-			}
 		}
-        // Todo: implémenter un filtre spécifiques aux comparaisons qu'on veut faire entre différentes propriétés.
+
 		return multiValuesFilter.match(values);
 	}
 }
