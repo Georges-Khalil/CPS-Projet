@@ -23,7 +23,7 @@ public class ReceivingInboundPort extends AbstractInboundPort implements Receivi
     public void receive(String channel, MessageI message) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((ClientI) c).receive_one(channel, message);
+                    ((ClientI) c).receiveOne(channel, message);
                     return null;
                 });
 
@@ -33,7 +33,7 @@ public class ReceivingInboundPort extends AbstractInboundPort implements Receivi
     public void receive(String channel, MessageI[] messages) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((ClientI) c).receive_multiple(channel, messages);
+                    ((ClientI) c).receiveMultiple(channel, messages);
                     return null;
                 });
 

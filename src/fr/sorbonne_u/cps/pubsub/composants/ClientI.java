@@ -3,10 +3,10 @@ package fr.sorbonne_u.cps.pubsub.composants;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 
 /**
- * Les clients peuvent own les ports clients.
+ * Implemented by components that offer ReceivingCI
   */
 public interface ClientI {
 
-    public void receive_one(String channel, MessageI message);
-    public void receive_multiple(String channel, MessageI[] messages);
+    public void receiveOne(String channel, MessageI message);
+    public void receiveMultiple(String channel, MessageI[] messages);
 }

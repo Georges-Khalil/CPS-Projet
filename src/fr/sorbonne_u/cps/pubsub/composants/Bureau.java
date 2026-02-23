@@ -114,15 +114,15 @@ public class Bureau extends AbstractComponent implements ClientI {
     }
 
     @Override
-    public void receive_one(String channel, MessageI message) {
+    public void receiveOne(String channel, MessageI message) {
         this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": message recu sur " + channel +
                 " | payload=" + message.getPayload() + "\n");
     }
 
     @Override
-    public void receive_multiple(String channel, MessageI[] messages) {
+    public void receiveMultiple(String channel, MessageI[] messages) {
         for (MessageI m : messages) {
-            receive_one(channel, m);
+            receiveOne(channel, m);
         }
     }
 }

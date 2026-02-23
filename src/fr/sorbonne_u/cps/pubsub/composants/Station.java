@@ -87,12 +87,12 @@ public class Station extends AbstractComponent implements ClientI {
     }
 
     @Override
-    public void receive_one(String channel, MessageI message) {
+    public void receiveOne(String channel, MessageI message) {
         // La station est un publieur, pas un souscripteur
     }
 
     @Override
-    public void receive_multiple(String channel, MessageI[] messages) {
+    public void receiveMultiple(String channel, MessageI[] messages) {
         // La station est un publieur, pas un souscripteur
     }
 }
