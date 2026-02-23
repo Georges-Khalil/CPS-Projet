@@ -4,7 +4,7 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.composants.Bureau;
-import fr.sorbonne_u.cps.pubsub.composants.Eolienne;
+import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.composants.Station;
 import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
 import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
@@ -46,7 +46,7 @@ public class CVM extends AbstractCVM {
         this.toggleTracing(courtier);
 
         String eolienne1 = AbstractComponent.createComponent(
-                Eolienne.class.getCanonicalName(),
+                WindTurbine.class.getCanonicalName(),
                 new Object[]{EOLIENNE_RECEIVE_1, EOLIENNE_REGISTRATION_1}
         );
         this.toggleTracing(eolienne1);
