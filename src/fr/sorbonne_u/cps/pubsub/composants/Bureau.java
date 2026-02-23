@@ -9,7 +9,14 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
+import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
+import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert.Level;
+import fr.sorbonne_u.cps.pubsub.meteo.Region;
+import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
 import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
+
+import java.time.Duration;
+import java.time.Instant;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
 
@@ -54,26 +61,37 @@ public class Bureau extends AbstractComponent implements ClientI {
         // Attendre que les abonnes soient prets
         Thread.sleep(3000);
 
-        // Publier un premier message d'alerte meteo sur channel1
-        Message msg1 = new Message();
+        // Publier un premier message d'alerte meteo sur channel1 (sera reçu par l'éolienne)
+        Region[] regions1 = {new Region(0, 0, 100, 100)};
+        MeteoAlert alert1 = new MeteoAlert(
+                MeteoAlertI.AlterType.STORM, 
+                Level.ORANGE, 
+                regions1, 
+                Instant.now(), 
+                Duration.ofHours(6)
+        );
+        Message msg1 = new Message(alert1);
         msg1.putProperty("type", "alert");
-        msg1.putProperty("alertType", "STORM");
-        msg1.putProperty("level", "ORANGE");
-        msg1.setPayload("Alerte tempete emise par " + RECEIVE_PORT_URI);
+        msg1.putProperty("bureau", RECEIVE_PORT_URI);
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg1);
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": alerte publiee sur channel1\n");
+        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": alerte publiee sur channel1 - " + alert1 + "\n");
 
-        // Publier un second message d'alerte sur channel0
-        // Ce message sera filtré et accepté par l'éolienne (filtre type=alert)
-        Message msg2 = new Message();
-        msg2.putProperty("type", "alerte-petite");
-        msg2.putProperty("alertType", "WIND");
-        msg2.putProperty("level", "ROUGE");
-        msg2.setPayload("Alerte vent violent emise par " + RECEIVE_PORT_URI);
+        // Publier un second message d'alerte sur channel1 (sera filtré, type="warning" != "alert")
+        Region[] regions2 = {new Region(50, 50, 75, 75)};
+        MeteoAlert alert2 = new MeteoAlert(
+                MeteoAlertI.AlterType.FLOODING, 
+                Level.RED, 
+                regions2, 
+                Instant.now(), 
+                Duration.ofHours(3)
+        );
+        Message msg2 = new Message(alert2);
+        msg2.putProperty("type", "warning");  // Cette alerte sera filtrée (type != "alert")
+        msg2.putProperty("bureau", RECEIVE_PORT_URI);
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg2);
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": petite alerte publiee sur channel1\n");
+        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": warning publiee sur channel1 (sera filtree) - " + alert2 + "\n");
     }
 
     @Override

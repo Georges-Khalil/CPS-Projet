@@ -85,7 +85,7 @@ public class Eolienne extends AbstractComponent implements ClientI {
     @Override
     public void receive_one(String channel, MessageI message) {
         this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": message recu sur " + channel +
-                " | payload=" + message.getPayload() + "\n");
+                " | payload=" + message.getPayload() + " | timestamp=" + message.getTimeStamp() + "\n");
     }
 
     @Override

@@ -9,6 +9,8 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
+import fr.sorbonne_u.cps.pubsub.meteo.Position;
+import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
@@ -54,16 +56,15 @@ public class Station extends AbstractComponent implements ClientI {
         // Attendre que les abonnes soient prets
         Thread.sleep(3000);
 
-        // Publier un message simple de donnees de vent
-        Message msg = new Message();
+        // Publier un message avec WindData comme payload
+        Position position = new Position(10, 20);
+        WindData windData = new WindData(position, 10.0, 5.0);
+        Message msg = new Message(windData);
         msg.putProperty("type", "wind");
-        msg.putProperty("windSpeedX", 10.0);
-        msg.putProperty("windSpeedY", 5.0);
         msg.putProperty("station", RECEIVE_PORT_URI);
-        msg.setPayload("Donnees de vent de " + RECEIVE_PORT_URI);
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel0", msg);
-        this.traceMessage("Station " + RECEIVE_PORT_URI + ": message vent publie sur channel0\n");
+        this.traceMessage("Station " + RECEIVE_PORT_URI + ": message vent publie sur channel0 - " + windData + "\n");
     }
 
     @Override
