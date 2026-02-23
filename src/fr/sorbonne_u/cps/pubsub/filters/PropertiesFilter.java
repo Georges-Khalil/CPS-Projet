@@ -1,7 +1,6 @@
 package fr.sorbonne_u.cps.pubsub.filters;
 
 import java.io.Serializable;
-import java.util.Objects;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.MultiValuesFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.PropertiesFilterI;
