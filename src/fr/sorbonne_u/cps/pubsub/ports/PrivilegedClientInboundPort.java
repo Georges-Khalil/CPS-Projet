@@ -28,41 +28,70 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     // todo: Remplir les fn en bas:
     @Override
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> {
+                    return ((Broker) c).hasCreatedChannel(receptionPortURI, channel);
+                });
     }
 
     @Override
     public boolean channelQuotaReached(String receptionPortURI) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> {
+                    return ((Broker) c).channelQuotaReached(receptionPortURI);
+                });
     }
 
     @Override
     public void createChannel(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).createChannel(receptionPortURI, channel, autorisedUsers);
+                    return null;
+                });
     }
 
     @Override
     public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return false;
+        return this.getOwner().handleRequest(
+                c -> {
+                    return ((Broker) c).isAuthorisedUser(channel, uri);
+                });
     }
 
     @Override
     public void modifyAuthorisedUsers(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel, autorisedUsers);
+                    return null;
+                });
     }
 
     @Override
     public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).removeAuthorisedUsers(receptionPortURI, channel, regularExpression);
+                    return null;
+                });
     }
 
     @Override
     public void destroyChannel(String receptionPortURI, String channel) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel);
+                    return null;
+                });
     }
 
     @Override
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
-
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).destroyChannelNow(receptionPortURI, channel);
+                    return null;
+                });
     }
 }
