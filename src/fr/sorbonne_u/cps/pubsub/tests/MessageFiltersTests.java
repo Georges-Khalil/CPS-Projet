@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -128,7 +129,7 @@ public class MessageFiltersTests {
   @Test
   void testPropertiesFilter() {
     MultiValuesFilterI sub_a_b_eq_c_filter = new MultiValuesFilter<Integer>(new String[] {"a", "b", "c"},
-            values -> values[0] - values[1] == values[2]);
+            values -> values.get(0) - values.get(1) == values.get(2));
 
     PropertiesFilterI mpf = new PropertiesFilter(sub_a_b_eq_c_filter);
 
@@ -148,7 +149,7 @@ public class MessageFiltersTests {
   @Test
   void testMessageFilter() {
     PropertiesFilterI strong_wind = new PropertiesFilter(new MultiValuesFilter<Double>(new String[] { "X", "Y" },
-            values -> Math.sqrt(values[0] * values[0] + values[1] * values[1]) >= 40.0));
+            values -> Math.sqrt(values.get(0) * values.get(0) + values.get(1) * values.get(1)) >= 40.0));
 
     PropertyFilterI is_wind_data = new PropertyFilter("Type", new ComparableValueFilter("WindData"));
     PropertyFilterI acceptable_version = new PropertyFilter("Version", new ComparableValueFilter(3.14, ComparableValueFilter.Operator.GE));

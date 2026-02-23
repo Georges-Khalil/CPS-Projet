@@ -3,13 +3,13 @@ package fr.sorbonne_u.cps.pubsub.filters;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class MultiValuesFilter<T> implements MessageFilterI.MultiValuesFilterI {
 
   @FunctionalInterface
   public interface Executable<T> {
-    boolean execute(T... values);
+    boolean execute(ArrayList<T> values);
   }
 
   final String[] names;
@@ -39,7 +39,10 @@ public class MultiValuesFilter<T> implements MessageFilterI.MultiValuesFilterI {
       return false;
 
     try {
-      return this.lambda.execute((T[]) values);
+      ArrayList<T> arr = new ArrayList<>();
+      for (Serializable value : values)
+        arr.add((T) value);
+      return this.lambda.execute(arr);
     } catch (ClassCastException e) {
       return false;
     }
