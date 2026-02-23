@@ -18,14 +18,14 @@ import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {RegistrationCI.class})
-public class Eolienne extends AbstractComponent implements ClientI {
+public class WindTurbine extends AbstractComponent implements ClientI {
 
     protected ReceivingInboundPort receive_port;
     private final String RECEIVE_PORT_URI;
     protected RegistrationOutboundPort registration_port;
     private final String REGISTRATION_PORT_URI;
 
-    protected Eolienne(String receive_port_uri, String registration_port_uri) throws Exception {
+    protected WindTurbine(String receive_port_uri, String registration_port_uri) throws Exception {
         super(1, 0);
         // Receive:
         this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
