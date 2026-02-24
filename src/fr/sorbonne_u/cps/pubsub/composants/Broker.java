@@ -15,9 +15,9 @@ import java.security.acl.NotOwnerException;
 import java.util.*;
 
 /**
- * Le courtier du système de publication/souscription.
- * Offre: PublishingCI et RegistrationCI
- * Requiert: ReceivingCI
+ * The broker of the publication / subscription system.
+ * Offers: PrivilegedClientCI (& PublishingCI) & RegistrationCI
+ * Requires: ReceivingCI
  */
 @OfferedInterfaces(offered = {RegistrationCI.class, PrivilegedClientCI.class})
 @RequiredInterfaces(required = {ReceivingCI.class})
@@ -55,7 +55,7 @@ public class Broker extends AbstractComponent {
         Channel(String owner_uri, String whitelist) {
             this.owner_uri = owner_uri;
             this.subscribers = new ArrayList<>();
-            this.whitelist = Arrays.asList(whitelist.split("\t"));
+            this.setWhiteList(whitelist);
         }
 
         public void setWhiteList(String whitelist) {
@@ -64,13 +64,13 @@ public class Broker extends AbstractComponent {
     }
 
 
-    private final HashMap<String, Channel> channels;
-    private final HashMap<String, Client> clients;
-
     public static final String BROKER_PUBLISH_URI = "broker-publish";
-    protected PublishingInboundPort bpip;
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
-    protected RegistrationInboundPort brip;
+
+    protected final PublishingInboundPort bpip;
+    protected final RegistrationInboundPort brip;
+    protected final HashMap<String, Channel> channels;
+    protected final HashMap<String, Client> clients;
 
     protected Broker() throws Exception {
         super(1, 0);
@@ -83,14 +83,14 @@ public class Broker extends AbstractComponent {
         this.clients = new HashMap<>();
 
         // Default channels
-        channels.put("channel 0", new Channel(null, ""));
-        channels.put("channel 1", new Channel(null, ""));
-        channels.put("channel 2", new Channel(null, ""));
+        this.channels.put("channel 0", new Channel(null, ""));
+        this.channels.put("channel 1", new Channel(null, ""));
+        this.channels.put("channel 2", new Channel(null, ""));
     }
 
     @Override
     public synchronized void finalise() throws Exception {
-        for (Client client : clients.values())
+        for (Client client : this.clients.values())
             this.doPortDisconnection(client.port.getPortURI());
         super.finalise();
     }
@@ -100,7 +100,7 @@ public class Broker extends AbstractComponent {
         try {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
-            for (Client client : clients.values())
+            for (Client client : this.clients.values())
                 client.port.unpublishPort();
         } catch (Exception e) {
             throw new ComponentShutdownException(e);
@@ -111,10 +111,12 @@ public class Broker extends AbstractComponent {
     // ---- Publication ----
 
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
+        if (message == null)
+            throw new IllegalArgumentException();
         if (!subscribed(receptionPortURI, channel))
             throw new NotSubscribedChannelException();
 
-        Channel chan = channels.get(channel);
+        Channel chan = this.channels.get(channel);
 
         for (Subscription entry : chan.subscribers)
             if (entry.filter.match(message))
@@ -122,6 +124,9 @@ public class Broker extends AbstractComponent {
     }
 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
+        if (messages == null)
+            throw new IllegalArgumentException();
+
         for (MessageI m : messages)
             publish(receptionPortURI, channel, m);
     }
@@ -129,16 +134,22 @@ public class Broker extends AbstractComponent {
     // ---- Registering ----
 
     public boolean registered(String receptionPortURI) throws Exception {
-        return clients.containsKey(receptionPortURI);
+        if (receptionPortURI == null || receptionPortURI.isEmpty())
+            throw new IllegalArgumentException();
+        return this.clients.containsKey(receptionPortURI);
     }
 
     public boolean registered(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
-        Client current = clients.get(receptionPortURI);
-        return current != null && current.rc.equals(rc);
+        if (receptionPortURI == null || rc == null || receptionPortURI.isEmpty())
+            throw new IllegalArgumentException();
+        Client client = this.clients.get(receptionPortURI);
+        return client != null && client.rc.equals(rc);
     }
 
     public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
-        if (clients.containsKey(receptionPortURI))
+        if (rc == null)
+            throw new IllegalArgumentException();
+        if (registered(receptionPortURI))
             throw new AlreadyRegisteredException();
 
         ReceivingOutboundPort outPort = new ReceivingOutboundPort(this);
@@ -149,15 +160,16 @@ public class Broker extends AbstractComponent {
                 ReceivingConnector.class.getCanonicalName()
         );
 
-        clients.put(receptionPortURI, new Client(receptionPortURI, outPort, rc));
-
+        this.clients.put(receptionPortURI, new Client(receptionPortURI, outPort, rc));
         return BROKER_PUBLISH_URI;
     }
 
     public String modifyServiceClass(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
+        if (rc == null)
+            throw new IllegalArgumentException();
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        clients.get(receptionPortURI).rc = rc;
+        this.clients.get(receptionPortURI).rc = rc;
         return BROKER_PUBLISH_URI;
     }
 
@@ -165,10 +177,10 @@ public class Broker extends AbstractComponent {
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
 
-        Client client = clients.remove(receptionPortURI);
+        Client client = this.clients.remove(receptionPortURI);
 
         for (String channel : client.subscriptions)
-            channels.get(channel).subscribers.removeIf(e -> e.client == client);
+            this.channels.get(channel).subscribers.removeIf(e -> e.client == client);
 
         this.doPortDisconnection(client.port.getPortURI());
         client.port.unpublishPort();
@@ -176,46 +188,47 @@ public class Broker extends AbstractComponent {
     }
 
     public boolean channelExist(String channel) throws Exception {
-        return channels.containsKey(channel);
+        if (channel == null || channel.isEmpty())
+            throw new IllegalArgumentException();
+        return this.channels.containsKey(channel);
     }
 
     public boolean subscribed(String receptionPortURI, String channel) throws Exception {
-        Client client = clients.get(receptionPortURI);
-        if (client == null)
+        if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        if (!channels.containsKey(channel))
+        if (!channelExist(channel))
             throw new UnknownChannelException();
-        return client.subscriptions.contains(channel);
+
+        return this.clients.get(receptionPortURI).subscriptions.contains(channel);
     }
 
     public void subscribe(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        if (!clients.containsKey(receptionPortURI))
+        if (filter == null)
+            throw new IllegalArgumentException();
+        if (subscribed(receptionPortURI, channel))
             throw new UnknownClientException();
-        if (!channels.containsKey(channel))
-            throw new UnknownChannelException();
 
         this.channels.get(channel).subscribers.add(new Subscription(this.clients.get(receptionPortURI), filter));
         this.clients.get(receptionPortURI).subscriptions.add(channel);
     }
 
     public void unsubscribe(String receptionPortURI, String channel) throws Exception {
-        if (!clients.containsKey(receptionPortURI))
-            throw new UnknownClientException();
-        if (!channelExist(channel))
-            throw new UnknownChannelException();
-        if (!clients.get(receptionPortURI).subscriptions.contains(channel))
-            throw new NotSubscribedChannelException();
-
-        Client client = clients.get(receptionPortURI);
-        channels.get(channel).subscribers.removeIf(e -> e.client == client);
-    }
-
-    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
         if (!subscribed(receptionPortURI, channel))
             throw new NotSubscribedChannelException();
 
-        Client client = clients.get(receptionPortURI);
-        for (Subscription sub : channels.get(channel).subscribers)
+        Client client = this.clients.get(receptionPortURI);
+        this.channels.get(channel).subscribers.removeIf(e -> e.client == client);
+        client.subscriptions.remove(channel);
+    }
+
+    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        if (filter == null)
+            throw new IllegalArgumentException();
+        if (!subscribed(receptionPortURI, channel))
+            throw new NotSubscribedChannelException();
+
+        Client client = this.clients.get(receptionPortURI);
+        for (Subscription sub : this.channels.get(channel).subscribers)
             if (sub.client == client) {
                 sub.filter = filter;
                 return true;
@@ -223,41 +236,60 @@ public class Broker extends AbstractComponent {
         return false;
     }
 
-    public Boolean channelAuthorised(String uri, String channel) {
-      return false; // TODO
+    public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        if (channelExist(channel))
+            return false;
+
+        return this.clients.get(receptionPortURI).rc == RegistrationCI.RegistrationClass.PREMIUM;
   }
 
-    // ---- Priviliged Client ----
+    // ---- Privileged Client ----
 
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        if (!channelExist(channel))
+            throw new UnknownChannelException();
         return this.channels.get(channel).owner_uri.equals(receptionPortURI);
     }
 
     public boolean channelQuotaReached(String receptionPortURI) throws Exception {
-        return false;
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        return false; // TODO
     }
 
-    public void createChannel(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-        this.channels.put(channel, new Channel(receptionPortURI, autorisedUsers));
+    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        if (!channelAuthorised(receptionPortURI, channel))
+            throw new UnauthorisedClientException();
+        this.channels.put(channel, new Channel(receptionPortURI, authorisedUsers));
     }
 
     public boolean isAuthorisedUser(String channel, String uri) throws Exception {
+        if (!registered(uri))
+            throw new UnknownClientException();
         if (!channelExist(channel))
             throw new UnknownChannelException();
         return channels.get(channel).whitelist.contains(uri);
     }
 
     public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        if (authorisedUsers == null || authorisedUsers.isEmpty())
+            throw new IllegalArgumentException();
         if (!hasCreatedChannel(receptionPortURI, channel))
             throw new NotOwnerException();
-        channels.get(channel).setWhiteList(authorisedUsers);
+        this.channels.get(channel).setWhiteList(authorisedUsers);
     }
 
     public void removeAuthorisedUsers(String receptionPortURI, String channel, String users) throws Exception {
+        if (users == null || users.isEmpty())
+            throw new IllegalArgumentException();
         if (!hasCreatedChannel(receptionPortURI, channel))
             throw new NotOwnerException();
 
-        Channel chan = channels.get(channel);
+        Channel chan = this.channels.get(channel);
         for (String user : users.split("\t"))
             chan.whitelist.remove(user);
     }
@@ -269,8 +301,11 @@ public class Broker extends AbstractComponent {
     }
 
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
+        if (!hasCreatedChannel(receptionPortURI, channel))
+            throw new NotOwnerException();
 
-        if (this.channels.get(channel).owner_uri.equals(receptionPortURI))
-            this.channels.remove(channel);
+        Channel chan = this.channels.remove(channel);
+        for (Subscription sub : chan.subscribers)
+            sub.client.subscriptions.remove(channel);
     }
 }
