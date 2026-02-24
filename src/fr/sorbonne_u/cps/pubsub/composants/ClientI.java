@@ -7,6 +7,6 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
   */
 public interface ClientI {
 
-    public void receiveOne(String channel, MessageI message);
-    public void receiveMultiple(String channel, MessageI[] messages);
+    void receiveOne(String channel, MessageI message);
+    void receiveMultiple(String channel, MessageI[] messages);
 }
