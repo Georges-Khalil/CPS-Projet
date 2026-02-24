@@ -83,9 +83,9 @@ public class Broker extends AbstractComponent {
         this.clients = new HashMap<>();
 
         // Default channels
-        this.channels.put("channel 0", new Channel(null, ""));
-        this.channels.put("channel 1", new Channel(null, ""));
-        this.channels.put("channel 2", new Channel(null, ""));
+        this.channels.put("channel0", new Channel(null, ""));
+        this.channels.put("channel1", new Channel(null, ""));
+        this.channels.put("channel2", new Channel(null, ""));
     }
 
     @Override
@@ -113,8 +113,10 @@ public class Broker extends AbstractComponent {
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         if (message == null)
             throw new IllegalArgumentException();
-        if (!subscribed(receptionPortURI, channel))
-            throw new NotSubscribedChannelException();
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        if (!channelExist(channel))
+            throw new UnknownChannelException();
 
         Channel chan = this.channels.get(channel);
 
