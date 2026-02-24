@@ -81,7 +81,7 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     public void destroyChannel(String receptionPortURI, String channel) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel);
+                    ((Broker) c).destroyChannel(receptionPortURI, channel);
                     return null;
                 });
     }
