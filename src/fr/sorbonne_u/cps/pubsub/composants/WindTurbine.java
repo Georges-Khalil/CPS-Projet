@@ -4,6 +4,7 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.filters.ComparableValueFilter;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
@@ -12,62 +13,54 @@ import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.filters.PropertyFilter;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
+import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
- * L'éolienne s'abonne aux canaux et reçoit les messages (vent, alertes).
+ * The Wind Turbine subscribes & receives messages (data, alerts).
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {RegistrationCI.class})
 public class WindTurbine extends AbstractComponent implements ClientI {
 
-    protected ReceivingInboundPort receive_port;
-    private final String RECEIVE_PORT_URI;
-    protected RegistrationOutboundPort registration_port;
-    private final String REGISTRATION_PORT_URI;
+    protected final ReceivingInboundPort receive_port;
+    protected final String RECEIVE_PORT_URI;
+    protected final RegistrationOutboundPort registration_port;
+    protected final String REGISTRATION_PORT_URI;
 
-    protected WindTurbine(String receive_port_uri, String registration_port_uri) throws Exception {
+    protected WindTurbine() throws Exception {
         super(1, 0);
-        // Receive:
-        this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
-        this.RECEIVE_PORT_URI = receive_port_uri;
+        this.REGISTRATION_PORT_URI = URIGenerator.getNew(this);
+        this.RECEIVE_PORT_URI = URIGenerator.getNew(this);
+
+        this.registration_port = new RegistrationOutboundPort(this.REGISTRATION_PORT_URI, this);
+        this.registration_port.publishPort();
+        this.receive_port = new ReceivingInboundPort(this.RECEIVE_PORT_URI, this);
         this.receive_port.publishPort();
-        // Registration:
-        this.registration_port = new RegistrationOutboundPort(registration_port_uri, this);
-        this.REGISTRATION_PORT_URI = registration_port_uri;
-        this.registration_port.publishPort();
 
-        /*
-        // Idée de création de port automatique, sans avoir a les nommer
-        this.registration_port = new ClientRegistrationOutboundPort(this);
-        this.REGISTRATION_PORT_URI = this.registration_port.getClientPortURI();
-        this.registration_port.publishPort();
-
-         */
+        this.doPortConnection(this.REGISTRATION_PORT_URI, Broker.BROKER_REGISTRATION_URI, RegistrationConnector.class.getCanonicalName());
     }
 
     @Override
     public synchronized void execute() throws Exception {
         super.execute();
 
-        // S'enregistrer auprès du courtier
-        this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
-        this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": enregistree\n");
+        this.registration_port.register(this.RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
+        this.traceMessage("WindTurbine : Registered\n");
 
-        // S'abonner au channel0 sans filtre
-        this.registration_port.subscribe(RECEIVE_PORT_URI, "channel0", new MessageFilter());
-        this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": abonnee a channel0\n");
+        // Subscribe with filters
+        this.registration_port.subscribe(this.RECEIVE_PORT_URI, "channel0", new MessageFilter());
+        this.traceMessage("Subscribed to channel0\n");
 
-        // S'abonner au channel1 avec un filtre qui n'accepte que les messages avec type=alert
         MessageFilter filter = new MessageFilter(
             new PropertyFilter("type", new ComparableValueFilter("alert"))  // N'accepte que les messages avec type=alert
         );
-        this.registration_port.subscribe(RECEIVE_PORT_URI, "channel1", filter);
-        this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": abonnee a channel1 avec filtre type=alert\n");
+        this.registration_port.subscribe(this.RECEIVE_PORT_URI, "channel1", filter);
+        this.traceMessage("Subscribed to channel1 with filter: type=alert\n");
     }
 
     @Override
     public synchronized void finalise() throws Exception {
-        this.doPortDisconnection(REGISTRATION_PORT_URI);
+        this.doPortDisconnection(this.REGISTRATION_PORT_URI);
         super.finalise();
     }
 
@@ -84,14 +77,13 @@ public class WindTurbine extends AbstractComponent implements ClientI {
 
     @Override
     public void receiveOne(String channel, MessageI message) {
-        this.traceMessage("Eolienne " + RECEIVE_PORT_URI + ": message recu sur " + channel +
-                " | payload=" + message.getPayload() + " | timestamp=" + message.getTimeStamp() + "\n");
+        this.traceMessage("Message received on '" + channel +
+                "' | payload=" + message.getPayload() + " | timestamp=" + message.getTimeStamp() + "\n");
     }
 
     @Override
     public void receiveMultiple(String channel, MessageI[] messages) {
-        for (MessageI m : messages) {
-            receiveOne(channel, m);
-        }
+        for (MessageI m : messages)
+            this.receiveOne(channel, m);
     }
 }

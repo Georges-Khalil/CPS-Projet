@@ -4,6 +4,8 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
+import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
@@ -19,49 +21,50 @@ import java.time.Duration;
 import java.time.Instant;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
+import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
- * Le bureau météorologique publie des alertes météo sur le système pub/sub.
+ * The Bureau publishes weather alerts on the pub/sub system.
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {PublishingCI.class, RegistrationCI.class})
 public class Bureau extends AbstractComponent implements ClientI {
 
-    protected ReceivingInboundPort receive_port;
-    private final String RECEIVE_PORT_URI;
-    protected PublishingOutboundPort publish_port;
-    private final String PUBLISH_PORT_URI;
-    protected RegistrationOutboundPort registration_port;
-    private final String REGISTRATION_PORT_URI;
+    protected final ReceivingInboundPort receive_port;
+    protected final String RECEIVE_PORT_URI;
+    protected final PublishingOutboundPort publish_port;
+    protected final String PUBLISH_PORT_URI;
+    protected final RegistrationOutboundPort registration_port;
+    protected final String REGISTRATION_PORT_URI;
 
-    protected Bureau(String receive_port_uri, String publish_port_uri, String registration_port_uri) throws Exception {
+    protected Bureau() throws Exception {
         super(1, 0);
-        // Receive:
-        this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
-        this.RECEIVE_PORT_URI = receive_port_uri;
-        this.receive_port.publishPort();
-        // Publish:
-        this.publish_port = new PublishingOutboundPort(publish_port_uri, this);
-        this.PUBLISH_PORT_URI = publish_port_uri;
-        this.publish_port.publishPort();
-        // Registration:
-        this.registration_port = new RegistrationOutboundPort(registration_port_uri, this);
-        this.REGISTRATION_PORT_URI = registration_port_uri;
+        this.REGISTRATION_PORT_URI = URIGenerator.getNew(this);
+        this.RECEIVE_PORT_URI = URIGenerator.getNew(this);
+        this.PUBLISH_PORT_URI = URIGenerator.getNew(this);
+
+        this.registration_port = new RegistrationOutboundPort(this.REGISTRATION_PORT_URI, this);
         this.registration_port.publishPort();
+        this.receive_port = new ReceivingInboundPort(this.RECEIVE_PORT_URI, this);
+        this.receive_port.publishPort();
+        this.publish_port = new PublishingOutboundPort(this.PUBLISH_PORT_URI, this);
+        this.publish_port.publishPort();
+
+        this.doPortConnection(this.REGISTRATION_PORT_URI, Broker.BROKER_REGISTRATION_URI, RegistrationConnector.class.getCanonicalName());
     }
 
     @Override
     public synchronized void execute() throws Exception {
         super.execute();
 
-        // S'enregistrer auprès du courtier
-        this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": enregistre\n");
+        String publisher_uri = this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
+        this.doPortConnection(this.PUBLISH_PORT_URI, publisher_uri, PublishingConnector.class.getCanonicalName());
+        this.traceMessage("Bureau : Registered\n");
 
-        // Attendre que les abonnes soient prets
-        Thread.sleep(3000);
+        // Wait for subscribers get ready
+        Thread.sleep(1000);
 
-        // Publier un premier message d'alerte meteo sur channel1 (sera reçu par l'éolienne)
+        // Publish a first alert message that should be filtered (accepted)
         Region[] regions1 = {new Region(0, 0, 100, 100)};
         MeteoAlert alert1 = new MeteoAlert(
                 MeteoAlertI.AlterType.STORM, 
@@ -72,12 +75,11 @@ public class Bureau extends AbstractComponent implements ClientI {
         );
         Message msg1 = new Message(alert1);
         msg1.putProperty("type", "alert");
-        msg1.putProperty("bureau", RECEIVE_PORT_URI);
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg1);
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": alerte publiee sur channel1 - " + alert1 + "\n");
+        this.traceMessage("Alert published on 'channel1' - " + alert1 + "\n");
 
-        // Publier un second message d'alerte sur channel1 (sera filtré, type="warning" != "alert")
+        // Publish a second message that should be filtered (refused)
         Region[] regions2 = {new Region(50, 50, 75, 75)};
         MeteoAlert alert2 = new MeteoAlert(
                 MeteoAlertI.AlterType.FLOODING, 
@@ -87,13 +89,11 @@ public class Bureau extends AbstractComponent implements ClientI {
                 Duration.ofHours(3)
         );
         Message msg2 = new Message(alert2);
-        msg2.putProperty("type", "warning");  // Cette alerte sera filtrée (type != "alert")
-        msg2.putProperty("bureau", RECEIVE_PORT_URI);
+        msg2.putProperty("type", "warning");
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg2);
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": warning publiee sur channel1 (sera filtree) - " + alert2 + "\n");
+        this.traceMessage("Published a warning message on 'channel1' - " + alert2 + "\n");
     }
-
     @Override
     public synchronized void finalise() throws Exception {
         this.doPortDisconnection(PUBLISH_PORT_URI);
@@ -115,14 +115,13 @@ public class Bureau extends AbstractComponent implements ClientI {
 
     @Override
     public void receiveOne(String channel, MessageI message) {
-        this.traceMessage("Bureau " + RECEIVE_PORT_URI + ": message recu sur " + channel +
-                " | payload=" + message.getPayload() + "\n");
+        this.traceMessage("Message received on '" + channel +
+                "' | payload=" + message.getPayload() + "\n");
     }
 
     @Override
     public void receiveMultiple(String channel, MessageI[] messages) {
-        for (MessageI m : messages) {
-            receiveOne(channel, m);
-        }
+        for (MessageI m : messages)
+            this.receiveOne(channel, m);
     }
 }

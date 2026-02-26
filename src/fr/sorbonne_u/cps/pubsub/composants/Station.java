@@ -4,6 +4,8 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
+import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
@@ -14,57 +16,57 @@ import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
+import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
- * La station météorologique publie des données de vent sur le système pub/sub.
+ * The station sends data on the pub/sub system.
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {PublishingCI.class, RegistrationCI.class})
 public class Station extends AbstractComponent implements ClientI {
 
-    protected ReceivingInboundPort receive_port;
-    private final String RECEIVE_PORT_URI;
-    protected PublishingOutboundPort publish_port;
-    private final String PUBLISH_PORT_URI;
-    protected RegistrationOutboundPort registration_port;
-    private final String REGISTRATION_PORT_URI;
+    protected final ReceivingInboundPort receive_port;
+    protected final String RECEIVE_PORT_URI;
+    protected final PublishingOutboundPort publish_port;
+    protected final String PUBLISH_PORT_URI;
+    protected final RegistrationOutboundPort registration_port;
+    protected final String REGISTRATION_PORT_URI;
 
-    protected Station(String receive_port_uri, String publish_port_uri, String registration_port_uri) throws Exception {
+    protected Station() throws Exception {
         super(1, 0);
-        // Receive:
-        this.receive_port = new ReceivingInboundPort(receive_port_uri, this);
-        this.RECEIVE_PORT_URI = receive_port_uri;
-        this.receive_port.publishPort();
-        // Publish:
-        this.publish_port = new PublishingOutboundPort(publish_port_uri, this);
-        this.PUBLISH_PORT_URI = publish_port_uri;
-        this.publish_port.publishPort();
-        // Registration:
-        this.registration_port = new RegistrationOutboundPort(registration_port_uri, this);
-        this.REGISTRATION_PORT_URI = registration_port_uri;
+        this.REGISTRATION_PORT_URI = URIGenerator.getNew(this);
+        this.RECEIVE_PORT_URI = URIGenerator.getNew(this);
+        this.PUBLISH_PORT_URI = URIGenerator.getNew(this);
+
+        this.registration_port = new RegistrationOutboundPort(this.REGISTRATION_PORT_URI, this);
         this.registration_port.publishPort();
+        this.receive_port = new ReceivingInboundPort(this.RECEIVE_PORT_URI, this);
+        this.receive_port.publishPort();
+        this.publish_port = new PublishingOutboundPort(this.PUBLISH_PORT_URI, this);
+        this.publish_port.publishPort();
+
+        this.doPortConnection(this.REGISTRATION_PORT_URI, Broker.BROKER_REGISTRATION_URI, RegistrationConnector.class.getCanonicalName());
     }
 
     @Override
     public synchronized void execute() throws Exception {
         super.execute();
 
-        // S'enregistrer auprès du courtier
-        this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
-        this.traceMessage("Station " + RECEIVE_PORT_URI + ": enregistree\n");
+        String publisher_uri = this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.FREE);
+        this.doPortConnection(this.PUBLISH_PORT_URI, publisher_uri, PublishingConnector.class.getCanonicalName());
+        this.traceMessage("Station : Registered\n");
 
-        // Attendre que les abonnes soient prets
-        Thread.sleep(3000);
+        // Wait for clients
+        Thread.sleep(1000);
 
-        // Publier un message avec WindData comme payload
+        // Publish a test message with WindData as payload
         Position position = new Position(10, 20);
         WindData windData = new WindData(position, 10.0, 5.0);
         Message msg = new Message(windData);
-        msg.putProperty("type", "wind");
-        msg.putProperty("station", RECEIVE_PORT_URI);
+        msg.putProperty("type", "wind");;
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel0", msg);
-        this.traceMessage("Station " + RECEIVE_PORT_URI + ": message vent publie sur channel0 - " + windData + "\n");
+        this.traceMessage("Publish a message on channel0 - " + windData + "\n");
     }
 
     @Override
@@ -86,13 +88,9 @@ public class Station extends AbstractComponent implements ClientI {
         super.shutdown();
     }
 
-    @Override
-    public void receiveOne(String channel, MessageI message) {
-        // La station est un publieur, pas un souscripteur
-    }
+    @Override // Not a receiver
+    public void receiveOne(String channel, MessageI message) { }
 
     @Override
-    public void receiveMultiple(String channel, MessageI[] messages) {
-        // La station est un publieur, pas un souscripteur
-    }
+    public void receiveMultiple(String channel, MessageI[] messages) {}
 }
