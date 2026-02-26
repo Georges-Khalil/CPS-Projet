@@ -5,7 +5,7 @@ import org.junit.platform.suite.api.Suite;
 
 @Suite
 @SelectClasses({
-        MessageTests.class,
-        MessageFiltersTests.class,
+    MessageTests.class,
+    MessageFiltersTests.class,
 })
 public class WholeTestSuite {}

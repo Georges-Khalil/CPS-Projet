@@ -1,90 +1,90 @@
 package fr.sorbonne_u.cps.pubsub.tests;
 
 public class MessageFilterExample {
-	
-//	public static void main(String[] args) {
-//		System.out.println("=== Message and Filter System Examples ===\n");
+    
+//    public static void main(String[] args) {
+//        System.out.println("=== Message and Filter System Examples ===\n");
 //
-//		// Example 1: Simple message with properties
-//		example1_SimpleMessage();
+//        // Example 1: Simple message with properties
+//        example1_SimpleMessage();
 //
-//		// Example 2: Value filters
-//		example2_ValueFilters();
+//        // Example 2: Value filters
+//        example2_ValueFilters();
 //
-//		// Example 3: Comparable value filters
-//		example3_ComparableFilters();
+//        // Example 3: Comparable value filters
+//        example3_ComparableFilters();
 //
-//		// Example 4: Time filters
-//		example4_TimeFilters();
+//        // Example 4: Time filters
+//        example4_TimeFilters();
 //
-//		// Example 5: BMI filter (cross-property constraint)
-//		example5_BMIFilter();
+//        // Example 5: BMI filter (cross-property constraint)
+//        example5_BMIFilter();
 //
-//		// Example 6: Message copying
-//		example6_MessageCopy();
-//	}
+//        // Example 6: Message copying
+//        example6_MessageCopy();
+//    }
 //
-//	private static void example1_SimpleMessage() {
-//		System.out.println("--- Example 1: Simple Message ---");
+//    private static void example1_SimpleMessage() {
+//        System.out.println("--- Example 1: Simple Message ---");
 //
-//		try {
-//			MessageI message = new Message();
-//			message.putProperty("station", "Paris-Montsouris");
-//			message.putProperty("temperature", 15.5);
-//			message.putProperty("windSpeed", 25);
-//			message.setPayload("Weather data for station");
+//        try {
+//            MessageI message = new Message();
+//            message.putProperty("station", "Paris-Montsouris");
+//            message.putProperty("temperature", 15.5);
+//            message.putProperty("windSpeed", 25);
+//            message.setPayload("Weather data for station");
 //
-//			System.out.println("Message created: " + message);
-//			System.out.println("Timestamp: " + message.getTimeStamp());
-//			System.out.println("Station: " + message.getPropertyValue("station"));
-//			System.out.println("Temperature: " + message.getPropertyValue("temperature"));
-//			System.out.println("Payload: " + message.getPayload());
-//			System.out.println();
-//		} catch (UnknownPropertyException e) {
-//			System.err.println("Error: " + e);
-//		}
-//	}
+//            System.out.println("Message created: " + message);
+//            System.out.println("Timestamp: " + message.getTimeStamp());
+//            System.out.println("Station: " + message.getPropertyValue("station"));
+//            System.out.println("Temperature: " + message.getPropertyValue("temperature"));
+//            System.out.println("Payload: " + message.getPayload());
+//            System.out.println();
+//        } catch (UnknownPropertyException e) {
+//            System.err.println("Error: " + e);
+//        }
+//    }
 //
-//	private static void example2_ValueFilters() {
-//		System.out.println("--- Example 2: Value Filters ---");
+//    private static void example2_ValueFilters() {
+//        System.out.println("--- Example 2: Value Filters ---");
 //
-//		MessageI message = new Message();
-//		message.putProperty("status", "active");
-//		message.putProperty("priority", 1);
+//        MessageI message = new Message();
+//        message.putProperty("status", "active");
+//        message.putProperty("priority", 1);
 //
-//		// Filter for exact value
-//		MessageFilterI filter = new MessageFilter(
-//			new PropertyFilter("status", new OneValueFilter("active"))
-//		);
+//        // Filter for exact value
+//        MessageFilterI filter = new MessageFilter(
+//            new PropertyFilter("status", new OneValueFilter("active"))
+//        );
 //
-//		System.out.println("Message with status='active': " + filter.match(message));
+//        System.out.println("Message with status='active': " + filter.match(message));
 //
-//		// Create another message with different status
-//		MessageI message2 = new Message();
-//		message2.putProperty("status", "inactive");
+//        // Create another message with different status
+//        MessageI message2 = new Message();
+//        message2.putProperty("status", "inactive");
 //
-//		System.out.println("Message with status='inactive': " + filter.match(message2));
-//		System.out.println();
-//	}
+//        System.out.println("Message with status='inactive': " + filter.match(message2));
+//        System.out.println();
+//    }
 //
-//	private static void example3_ComparableFilters() {
-//		System.out.println("--- Example 3: Comparable Filters ---");
+//    private static void example3_ComparableFilters() {
+//        System.out.println("--- Example 3: Comparable Filters ---");
 //
-//		MessageI message = new Message();
-//		message.putProperty("temperature", 30.0);
-//		message.putProperty("windSpeed", 45);
+//        MessageI message = new Message();
+//        message.putProperty("temperature", 30.0);
+//        message.putProperty("windSpeed", 45);
 //
-//		// Filter for temperature >= 25
-//		MessageFilterI tempFilter = new MessageFilter(
-//			new PropertyFilter("temperature",
-//				new ComparableValueFilter((Comparable<Object>)(Object)25.0, ComparableValueFilter.Operator.GE))
-//		);
+//        // Filter for temperature >= 25
+//        MessageFilterI tempFilter = new MessageFilter(
+//            new PropertyFilter("temperature",
+//                new ComparableValueFilter((Comparable<Object>)(Object)25.0, ComparableValueFilter.Operator.GE))
+//        );
 //
-//		System.out.println("Temperature >= 25: " + tempFilter.match(message));
+//        System.out.println("Temperature >= 25: " + tempFilter.match(message));
 //
-//		// Filter for windSpeed > 50
-//		MessageFilterI windFilter = new MessageFilter(
-//			new PropertyFilter("windSpeed",
+//        // Filter for windSpeed > 50
+//        MessageFilterI windFilter = new MessageFilter(
+//    		new PropertyFilter("windSpeed",
 //				new ComparableValueFilter((Comparable<Object>)(Object)50, ComparableValueFilter.Operator.GT))
 //		);
 //
