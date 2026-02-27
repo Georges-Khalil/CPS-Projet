@@ -1,15 +1,10 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.components.ports.AbstractOutboundPort;
-import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
-import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
-
-import java.util.ArrayList;
 
 /**
- *  Ce port implémente PublishingCI en tant que OfferedCI
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class PrivilegedClientOutboundPort extends PublishingOutboundPort implements PrivilegedClientCI {
     // TODO: Vérifier, peut-on extend PublishingOutboundPort? N'y a-t-il pas des problèmes dans le calcul d'instances

@@ -6,6 +6,9 @@ import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class ReceivingOutboundPort extends AbstractOutboundPort implements ReceivingCI {
 
     public ReceivingOutboundPort(String uri, ComponentI owner) throws Exception {

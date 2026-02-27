@@ -5,6 +5,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.MultiValuesFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.PropertiesFilterI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class PropertiesFilter implements PropertiesFilterI {
     private static final long serialVersionUID = 1L;
     

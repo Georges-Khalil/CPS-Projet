@@ -4,6 +4,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class MessageFilter implements MessageFilterI {
     private static final long serialVersionUID = 1L;
     

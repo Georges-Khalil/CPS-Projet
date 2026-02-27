@@ -4,10 +4,10 @@ import fr.sorbonne_u.components.connectors.AbstractConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 
-public class ReceivingConnector
-        extends AbstractConnector
-        implements ReceivingCI
-{
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
+public class ReceivingConnector extends AbstractConnector implements ReceivingCI {
 
     @Override
     public void receive(String channel, MessageI message) throws Exception {

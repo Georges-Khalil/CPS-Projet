@@ -6,12 +6,10 @@ import fr.sorbonne_u.components.connectors.AbstractConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 
-import java.util.ArrayList;
-
-public class PublishingConnector
-        extends AbstractConnector
-        implements PublishingCI
-{
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
+public class PublishingConnector extends AbstractConnector implements PublishingCI {
 
     @Override
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {

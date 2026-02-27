@@ -6,7 +6,9 @@ import fr.sorbonne_u.cps.pubsub.composants.ClientI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 
-
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class ReceivingInboundPort extends AbstractInboundPort implements ReceivingCI {
 
     public ReceivingInboundPort(ComponentI owner) throws Exception {

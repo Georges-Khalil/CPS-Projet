@@ -25,6 +25,8 @@ import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
  * The Bureau publishes weather alerts on the pub/sub system.
+ * 
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {PublishingCI.class, RegistrationCI.class})

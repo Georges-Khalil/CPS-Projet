@@ -8,4 +8,7 @@ import org.junit.platform.suite.api.Suite;
     MessageTests.class,
     MessageFiltersTests.class,
 })
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class WholeTestSuite {}

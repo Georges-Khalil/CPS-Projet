@@ -5,6 +5,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class MultiValuesFilter<T> implements MessageFilterI.MultiValuesFilterI {
 
   @FunctionalInterface

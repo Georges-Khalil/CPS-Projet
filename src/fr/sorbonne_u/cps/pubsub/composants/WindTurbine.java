@@ -17,6 +17,8 @@ import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
  * The Wind Turbine subscribes & receives messages (data, alerts).
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {RegistrationCI.class})

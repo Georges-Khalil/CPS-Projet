@@ -1,16 +1,11 @@
 package fr.sorbonne_u.cps.pubsub.connectors;
 
-import fr.sorbonne_u.components.connectors.AbstractConnector;
-import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
-import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 
-import java.util.ArrayList;
-
-public class PrivilegedClientConnector
-        extends PublishingConnector
-        implements PrivilegedClientCI
-{
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
+public class PrivilegedClientConnector extends PublishingConnector implements PrivilegedClientCI {
 
 //    Si jamais on doit cast en tant que PrivilegedClientCI et pas en tant que PublishingCI
 //    @Override

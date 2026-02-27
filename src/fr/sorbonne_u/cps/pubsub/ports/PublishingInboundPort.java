@@ -11,7 +11,7 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import java.util.ArrayList;
 
 /**
- *  Ce port implémente PublishingCI en tant que RequiredCI
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class PublishingInboundPort extends AbstractInboundPort implements PublishingCI {
 
@@ -22,7 +22,6 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
         assert owner instanceof Broker;
     }
 
-    // Constructeur utilisé par PrivilegedClientInboundPort
     protected PublishingInboundPort(
             Class<? extends OfferedCI> implementedInterface,
             ComponentI owner
@@ -31,12 +30,11 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
         assert owner instanceof Broker;
     }
 
-    // Facultatif, on peut imposer une URI
     public PublishingInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PublishingCI.class, owner);
         assert owner instanceof Broker;
     }
-    // Constructeur utilisé par PrivilegedClientInboundPort
+
     protected PublishingInboundPort(
             String uri,
             Class<? extends OfferedCI> implementedInterface,
@@ -53,7 +51,7 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
                     ((Broker) c).publish(receptionPortURI, channel, message);
                     return null;
                 });
-        /*
+        /* TODO: ??
         // Les exemples proposent cette implémentation :
         this.owner.runTask(
                 new AbstractComponent.AbstractTask() {

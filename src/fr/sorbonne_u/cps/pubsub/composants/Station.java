@@ -20,6 +20,8 @@ import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
  * The station sends data on the pub/sub system.
+ * 
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
 @RequiredInterfaces(required = {PublishingCI.class, RegistrationCI.class})

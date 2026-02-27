@@ -1,16 +1,11 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
-import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
-
-import java.util.ArrayList;
 
 /**
- *  Ce port implémente PublishingCI en tant que RequiredCI
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class PrivilegedClientInboundPort extends PublishingInboundPort implements PrivilegedClientCI {
 
@@ -20,26 +15,20 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
         super(PrivilegedClientCI.class, owner);
     }
 
-    // Facultatif, on peut imposer une URI
     public PrivilegedClientInboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PrivilegedClientCI.class, owner);
     }
 
-    // todo: Remplir les fn en bas:
     @Override
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
         return this.getOwner().handleRequest(
-                c -> {
-                    return ((Broker) c).hasCreatedChannel(receptionPortURI, channel);
-                });
+                c -> ((Broker) c).hasCreatedChannel(receptionPortURI, channel));
     }
 
     @Override
     public boolean channelQuotaReached(String receptionPortURI) throws Exception {
         return this.getOwner().handleRequest(
-                c -> {
-                    return ((Broker) c).channelQuotaReached(receptionPortURI);
-                });
+                c -> ((Broker) c).channelQuotaReached(receptionPortURI));
     }
 
     @Override
@@ -54,9 +43,7 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     @Override
     public boolean isAuthorisedUser(String channel, String uri) throws Exception {
         return this.getOwner().handleRequest(
-                c -> {
-                    return ((Broker) c).isAuthorisedUser(channel, uri);
-                });
+                c -> ((Broker) c).isAuthorisedUser(channel, uri));
     }
 
     @Override

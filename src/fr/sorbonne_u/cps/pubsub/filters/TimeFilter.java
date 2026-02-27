@@ -4,9 +4,10 @@ import java.time.Instant;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.TimeFilterI;
 
 /**
- * La classe ici est abstraite, mais en créant des objets TimeFilter avec from(), to(),
- *  between() ou wildcard(), un objet 'complet' est rendu avec une implémentation différente
- *  de la méthode match().
+ * It's an abstract class that we can use by getting a complete object with acceptAfter / Before / Between / Any
+ * The method 'match' is override according to our goal
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public abstract class TimeFilter implements TimeFilterI {
     private static final long serialVersionUID = 1L;

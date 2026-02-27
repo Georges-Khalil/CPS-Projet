@@ -10,6 +10,9 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class MessageTests {
 
     @Test

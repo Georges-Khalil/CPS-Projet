@@ -18,6 +18,8 @@ import java.util.*;
  * The broker of the publication / subscription system.
  * Offers: PrivilegedClientCI (& PublishingCI) & RegistrationCI
  * Requires: ReceivingCI
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 @OfferedInterfaces(offered = {RegistrationCI.class, PrivilegedClientCI.class})
 @RequiredInterfaces(required = {ReceivingCI.class})
@@ -64,8 +66,8 @@ public class Broker extends AbstractComponent {
     }
 
 
-    public static final String BROKER_PUBLISH_URI = "broker-publish";
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
+    private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
 
     protected final PublishingInboundPort bpip;
     protected final RegistrationInboundPort brip;

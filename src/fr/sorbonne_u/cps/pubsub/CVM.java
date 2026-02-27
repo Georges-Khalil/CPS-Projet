@@ -6,9 +6,10 @@ import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.composants.Bureau;
 import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
-import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class CVM extends AbstractCVM {
 
     public CVM() throws Exception {

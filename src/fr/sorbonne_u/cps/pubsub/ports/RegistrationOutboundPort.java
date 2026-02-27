@@ -5,7 +5,9 @@ import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
-
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class RegistrationOutboundPort extends AbstractOutboundPort implements RegistrationCI  {
 
     public RegistrationOutboundPort(String uri, ComponentI owner) throws Exception {

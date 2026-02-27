@@ -4,10 +4,10 @@ import fr.sorbonne_u.components.connectors.AbstractConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
-public class RegistrationConnector
-        extends AbstractConnector
-        implements RegistrationCI
-{
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
+public class RegistrationConnector extends AbstractConnector implements RegistrationCI {
 
     @Override
     public boolean registered(String receptionPortURI) throws Exception {

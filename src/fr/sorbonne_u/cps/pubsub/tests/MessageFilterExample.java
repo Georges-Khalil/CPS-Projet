@@ -1,5 +1,8 @@
 package fr.sorbonne_u.cps.pubsub.tests;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class MessageFilterExample {
     
 //    public static void main(String[] args) {

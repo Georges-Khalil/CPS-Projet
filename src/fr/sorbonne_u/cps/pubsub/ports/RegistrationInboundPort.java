@@ -7,10 +7,11 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
 /**
- * Utilisé par tous les composants sauf le courtier, pour s'enregistrer auprès du courtier.
+ * Used by components to register to the broker
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class RegistrationInboundPort extends AbstractInboundPort implements RegistrationCI {
-
 
     public RegistrationInboundPort(ComponentI owner) throws Exception {
         super(RegistrationCI.class, owner);
@@ -44,8 +45,6 @@ public class RegistrationInboundPort extends AbstractInboundPort implements Regi
                 c -> ((Broker) c).registered(receptionPortURI, rc));
 
     }
-
-    //todo: le reste:
 
     @Override
     public String register(String receptionPortURI, RegistrationClass rc) throws Exception {

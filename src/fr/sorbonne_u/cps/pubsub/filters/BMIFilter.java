@@ -3,6 +3,9 @@ package fr.sorbonne_u.cps.pubsub.filters;
 import java.io.Serializable;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.MultiValuesFilterI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class BMIFilter implements MultiValuesFilterI {
     private static final long serialVersionUID = 1L;
     
