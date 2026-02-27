@@ -31,8 +31,8 @@ public class PrivilegedClientConnector extends PublishingConnector implements Pr
     }
 
     @Override
-    public void createChannel(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-        ((PrivilegedClientCI) this.offering).createChannel(receptionPortURI, channel, autorisedUsers);
+    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        ((PrivilegedClientCI) this.offering).createChannel(receptionPortURI, channel, authorisedUsers);
 
     }
 
@@ -42,8 +42,8 @@ public class PrivilegedClientConnector extends PublishingConnector implements Pr
     }
 
     @Override
-    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-        ((PrivilegedClientCI) this.offering).modifyAuthorisedUsers(receptionPortURI, channel, autorisedUsers);
+    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        ((PrivilegedClientCI) this.offering).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
 
     }
 

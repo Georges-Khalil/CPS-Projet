@@ -24,9 +24,6 @@ public class PropertiesFilter implements PropertiesFilterI {
         return this.multiValuesFilter;
     }
 
-    /**
-     * 'Property...' nous permet de match cette fonction avec une property, deux, trois ou alors une liste, une array
-     */
     @Override
     public boolean match(PropertyI... properties) {
         if (properties == null)

@@ -27,8 +27,8 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
     }
 
     @Override
-    public void createChannel(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-        ((PrivilegedClientCI) this.getConnector()).createChannel(receptionPortURI, channel, autorisedUsers);
+    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        ((PrivilegedClientCI) this.getConnector()).createChannel(receptionPortURI, channel, authorisedUsers);
     }
 
     @Override
@@ -37,8 +37,8 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
     }
 
     @Override
-    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
-        ((PrivilegedClientCI) this.getConnector()).modifyAuthorisedUsers(receptionPortURI, channel, autorisedUsers);
+    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+        ((PrivilegedClientCI) this.getConnector()).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
     }
 
     @Override

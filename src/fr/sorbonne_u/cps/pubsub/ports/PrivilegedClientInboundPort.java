@@ -32,10 +32,10 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     }
 
     @Override
-    public void createChannel(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
+    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).createChannel(receptionPortURI, channel, autorisedUsers);
+                    ((Broker) c).createChannel(receptionPortURI, channel, authorisedUsers);
                     return null;
                 });
     }
@@ -47,10 +47,10 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     }
 
     @Override
-    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String autorisedUsers) throws Exception {
+    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel, autorisedUsers);
+                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
                     return null;
                 });
     }

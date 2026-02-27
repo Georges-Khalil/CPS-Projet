@@ -20,7 +20,7 @@ import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 /**
  * The station sends data on the pub/sub system.
- * 
+ *
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 @OfferedInterfaces(offered = {ReceivingCI.class})
@@ -65,7 +65,7 @@ public class Station extends AbstractComponent implements ClientI {
         Position position = new Position(10, 20);
         WindData windData = new WindData(position, 10.0, 5.0);
         Message msg = new Message(windData);
-        msg.putProperty("type", "wind");;
+        msg.putProperty("type", "wind");
 
         this.publish_port.publish(RECEIVE_PORT_URI, "channel0", msg);
         this.traceMessage("Publish a message on channel0 - " + windData + "\n");

@@ -41,6 +41,6 @@ public class WindData implements WindDataI {
 
   @Override
   public String toString() {
-    return "WindData{position=" + this.position.toString() + ", x=" + this.x + ", y=" + this.y + "}";
+    return "WindData{position=" + this.position + ", x=" + this.x + ", y=" + this.y + "}";
   }
 }

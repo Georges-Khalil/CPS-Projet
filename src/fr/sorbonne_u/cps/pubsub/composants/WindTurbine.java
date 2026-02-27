@@ -54,7 +54,7 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         this.traceMessage("Subscribed to channel0\n");
 
         MessageFilter filter = new MessageFilter(
-            new PropertyFilter("type", new ComparableValueFilter("alert"))  // N'accepte que les messages avec type=alert
+            new PropertyFilter("type", new ComparableValueFilter("alert"))
         );
         this.registration_port.subscribe(this.RECEIVE_PORT_URI, "channel1", filter);
         this.traceMessage("Subscribed to channel1 with filter: type=alert\n");
