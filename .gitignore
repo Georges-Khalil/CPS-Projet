@@ -4,3 +4,5 @@ classes
 .idea
 .settings
 *.class
+.classpath
+.project

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Sorbonne/S2/CPS/workspace/BCM4Java-22012026/BCM4Java-22012026.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Projet-Base"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>
