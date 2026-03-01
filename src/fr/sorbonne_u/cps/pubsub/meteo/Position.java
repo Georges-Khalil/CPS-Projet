@@ -18,16 +18,8 @@ public class Position implements PositionI {
   @Override
   public boolean equals(PositionI p) {
     if (p instanceof Position)
-      return ((Position)p).getX() == x && ((Position)p).getX() == y;
+      return ((Position)p).x == x && ((Position)p).y == y;
     throw new TypeMismatchException();
-  }
-
-  public int getX() {
-    return this.x;
-  }
-
-  public int getY() {
-    return this.y;
   }
 
   @Override
