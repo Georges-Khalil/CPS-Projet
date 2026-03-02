@@ -24,8 +24,8 @@ public class Region implements RegionI {
     if (!(p instanceof Position))
       throw new IllegalArgumentException();
     Position pos = ((Position) p);
-    return pos.getX() >= this.x && pos.getX() < this.x + this.width &&
-           pos.getY() >= this.y && pos.getY() < this.y + this.height;
+    return pos.x >= this.x && pos.x < this.x + this.width &&
+           pos.y >= this.y && pos.y < this.y + this.height;
   }
 
   @Override
