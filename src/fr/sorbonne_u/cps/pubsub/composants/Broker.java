@@ -7,6 +7,7 @@ import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.pubsub.exceptions.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
 import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
+import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.PublishingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
@@ -65,18 +66,19 @@ public class Broker extends AbstractComponent {
         }
     }
 
-
+    public static final String WIND_CHANNEL = "wind_channel";
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
+
     private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
 
-    protected final PublishingInboundPort bpip;
+    protected final PrivilegedClientInboundPort bpip;
     protected final RegistrationInboundPort brip;
     protected final HashMap<String, Channel> channels;
     protected final HashMap<String, Client> clients;
 
     protected Broker() throws Exception {
         super(1, 0);
-        this.bpip = new PublishingInboundPort(BROKER_PUBLISH_URI, this);
+        this.bpip = new PrivilegedClientInboundPort(BROKER_PUBLISH_URI, this);
         this.brip = new RegistrationInboundPort(BROKER_REGISTRATION_URI, this);
         this.bpip.publishPort();
         this.brip.publishPort();
@@ -85,13 +87,12 @@ public class Broker extends AbstractComponent {
         this.clients = new HashMap<>();
 
         // Default channels
-        this.channels.put("channel0", new Channel(null, ""));
-        this.channels.put("channel1", new Channel(null, ""));
-        this.channels.put("channel2", new Channel(null, ""));
+        this.channels.put(WIND_CHANNEL, new Channel(null, ""));
     }
 
     @Override
     public synchronized void finalise() throws Exception {
+        System.out.println("R F");
         for (Client client : this.clients.values())
             this.doPortDisconnection(client.port.getPortURI());
         super.finalise();
@@ -99,6 +100,7 @@ public class Broker extends AbstractComponent {
 
     @Override
     public synchronized void shutdown() throws ComponentShutdownException {
+        System.out.println("R S");
         try {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
@@ -122,9 +124,11 @@ public class Broker extends AbstractComponent {
 
         Channel chan = this.channels.get(channel);
 
+        System.out.println("Publish 1");
         for (Subscription entry : chan.subscribers)
             if (entry.filter.match(message))
                 entry.client.port.receive(channel, message);
+        System.out.println("Publish 2");
     }
 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {

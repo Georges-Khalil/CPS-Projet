@@ -6,6 +6,8 @@ import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.composants.Bureau;
 import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.composants.Station;
+import fr.sorbonne_u.cps.pubsub.meteo.Position;
+import fr.sorbonne_u.cps.pubsub.meteo.Region;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -28,17 +30,17 @@ public class CVM extends AbstractCVM {
 
         String windTurbine1 = AbstractComponent.createComponent(
                 WindTurbine.class.getCanonicalName(),
-                new Object[]{}
+                new Object[]{new Position(20, 30)}
         );
 
         String station1 = AbstractComponent.createComponent(
                 Station.class.getCanonicalName(),
-                new Object[]{}
+                new Object[]{new Position(0, 0)}
         );
 
         String station2 = AbstractComponent.createComponent(
                 Station.class.getCanonicalName(),
-                new Object[]{}
+                new Object[]{new Position(50, 30)}
         );
 
         String bureau1 = AbstractComponent.createComponent(
@@ -60,7 +62,7 @@ public class CVM extends AbstractCVM {
 
     public static void main(String[] args) throws Exception {
         CVM cvm = new CVM();
-        cvm.startStandardLifeCycle(10000L);
+        cvm.startStandardLifeCycle(3000L);
         System.exit(0);
     }
 }
