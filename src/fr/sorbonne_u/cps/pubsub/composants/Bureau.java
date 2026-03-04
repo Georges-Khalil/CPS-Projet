@@ -1,68 +1,80 @@
 package fr.sorbonne_u.cps.pubsub.composants;
 
 import fr.sorbonne_u.components.AbstractComponent;
-import fr.sorbonne_u.components.annotations.OfferedInterfaces;
-import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.meteo.interfaces.RegionI;
 import fr.sorbonne_u.cps.meteo.interfaces.WindDataI;
-import fr.sorbonne_u.cps.pubsub.connectors.PrivilegedClientConnector;
-import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
-import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
-import fr.sorbonne_u.cps.pubsub.exceptions.UnknownPropertyException;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
-import fr.sorbonne_u.cps.pubsub.interfaces.*;
+import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
+import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
 import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert.Level;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.Region;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
-import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientOutboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
+import fr.sorbonne_u.cps.pubsub.plugins.ClientPrivilegedPlugin;
+import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
+import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
+import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;
+import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 
-import fr.sorbonne_u.cps.pubsub.ports.ReceivingInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
-import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
-
 /**
  * The Bureau publishes weather alerts on the pub/sub system.
- * 
+ * Uses plugins for registration, publication (privileged), and subscription.
+ *
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
-@OfferedInterfaces(offered = {ReceivingCI.class})
-@RequiredInterfaces(required = {PrivilegedClientCI.class, RegistrationCI.class})
 public class Bureau extends AbstractComponent implements ClientI {
 
     public static String WEATHER_ALERTS_CHANNEL = "weather_alerts_channel";
 
-    protected final String REGISTRATION_PORT_URI;
-    protected final String RECEIVE_PORT_URI;
-    protected final String PUBLISH_PORT_URI;
-    protected final RegistrationOutboundPort registration_port;
-    protected final ReceivingInboundPort receive_port;
-    protected final PrivilegedClientOutboundPort publish_port;
+    /** URI that identifies this client in the pub/sub system. */
+    protected final String receptionPortURI;
+
+    /** Plugin for registration. */
+    protected ClientRegistrationPlugin registrationPlugin;
+
+    /** Plugin for publication (privileged, PREMIUM). */
+    protected ClientPublicationPlugin publicationPlugin;
+
+    /** Plugin for subscription and receiving. */
+    protected ClientSubscriptionPlugin subscriptionPlugin;
+
+    /** Plugin for privileged channel management. */
+    protected ClientPrivilegedPlugin privilegedPlugin;
 
     protected final HashMap<Integer, RegionI> stations;
 
     protected Bureau() throws Exception {
         super(1, 0);
-        this.REGISTRATION_PORT_URI = URIGenerator.getNew(this);
-        this.RECEIVE_PORT_URI = URIGenerator.getNew(this);
-        this.PUBLISH_PORT_URI = URIGenerator.getNew(this);
 
-        this.registration_port = new RegistrationOutboundPort(this.REGISTRATION_PORT_URI, this);
-        this.registration_port.publishPort();
-        this.receive_port = new ReceivingInboundPort(this.RECEIVE_PORT_URI, this);
-        this.receive_port.publishPort();
-        this.publish_port = new PrivilegedClientOutboundPort(this.PUBLISH_PORT_URI, this);
-        this.publish_port.publishPort();
+        this.receptionPortURI = URIGenerator.getNew(this);
 
-        this.doPortConnection(this.REGISTRATION_PORT_URI, Broker.BROKER_REGISTRATION_URI, RegistrationConnector.class.getCanonicalName());
+        // Create and install the subscription plugin (creates the ReceivingInboundPort)
+        this.subscriptionPlugin = new ClientSubscriptionPlugin(this.receptionPortURI);
+        this.installPlugin(this.subscriptionPlugin);
+
+        // Create and install the registration plugin
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.installPlugin(this.registrationPlugin);
+
+        // Create and install the publication plugin (PREMIUM class -> PrivilegedClientOutboundPort)
+        this.publicationPlugin = new ClientPublicationPlugin(RegistrationCI.RegistrationClass.PREMIUM);
+        this.installPlugin(this.publicationPlugin);
+
+        // Create and install the privileged client plugin
+        this.privilegedPlugin = new ClientPrivilegedPlugin();
+        this.installPlugin(this.privilegedPlugin);
+
+        // Wire plugin references
+        this.subscriptionPlugin.setRegistrationPlugin(this.registrationPlugin);
+        this.publicationPlugin.setRegistrationPlugin(this.registrationPlugin);
+        this.privilegedPlugin.setPluginReferences(this.registrationPlugin, this.publicationPlugin);
 
         this.stations = new HashMap<>();
     }
@@ -71,32 +83,37 @@ public class Bureau extends AbstractComponent implements ClientI {
     public void execute() throws Exception {
         super.execute();
 
-        String publisher_uri = this.registration_port.register(RECEIVE_PORT_URI, RegistrationCI.RegistrationClass.PREMIUM);
-        this.doPortConnection(this.PUBLISH_PORT_URI, publisher_uri, PrivilegedClientConnector.class.getCanonicalName());
+        // Register as PREMIUM
+        this.registrationPlugin.register(RegistrationCI.RegistrationClass.PREMIUM);
+
+        // Connect the publication plugin to the broker's publishing port
+        this.publicationPlugin.connectToPublishingPort(
+                this.registrationPlugin.getPublishingPortURI());
         this.traceMessage("Bureau : Registered\n");
 
-        this.publish_port.createChannel(this.RECEIVE_PORT_URI, WEATHER_ALERTS_CHANNEL, "*WindTurbine*");
+        // Create the weather alerts channel
+        this.privilegedPlugin.createChannel(WEATHER_ALERTS_CHANNEL, ".*");
 
-        this.registration_port.subscribe(this.RECEIVE_PORT_URI, Broker.WIND_CHANNEL, new MessageFilter());
+        // Subscribe to wind channel to monitor stations
+        this.subscriptionPlugin.subscribe(Broker.WIND_CHANNEL, new MessageFilter());
     }
+
     @Override
     public synchronized void finalise() throws Exception {
-        System.out.println("B F");
-        this.doPortDisconnection(PUBLISH_PORT_URI);
-        System.out.println("B2 F");
-        this.doPortDisconnection(REGISTRATION_PORT_URI);
-        System.out.println("B3 F");
+        this.finalisePlugin(ClientPrivilegedPlugin.PLUGIN_URI);
+        this.finalisePlugin(ClientPublicationPlugin.PLUGIN_URI);
+        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
+        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
         super.finalise();
-        System.out.println("B4 F");
     }
 
     @Override
     public synchronized void shutdown() throws ComponentShutdownException {
-        System.out.println("B S");
         try {
-            this.receive_port.unpublishPort();
-            this.publish_port.unpublishPort();
-            this.registration_port.unpublishPort();
+            this.uninstallPlugin(ClientPrivilegedPlugin.PLUGIN_URI);
+            this.uninstallPlugin(ClientPublicationPlugin.PLUGIN_URI);
+            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
+            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
         } catch (Exception e) {
             throw new ComponentShutdownException(e);
         }
@@ -111,18 +128,27 @@ public class Bureau extends AbstractComponent implements ClientI {
         WindDataI windData = (WindDataI) message.getPayload();
         double force = windData.force();
 
+        RegionI region = this.stations.get((Integer) message.getPropertyValue("ID"));
+
+        if (region == null) {
+            // Skip creating alert if station info not available yet
+            return;
+        }
+
         MeteoAlert alert1 = new MeteoAlert(
-                ((Position)windData.getPosition()).x < 0 ? MeteoAlertI.AlterType.STORM : MeteoAlertI.AlterType.ICY_STORM, // Can be cold in the north
-                force < 20 ? Level.GREEN : force < 60 ? Level.YELLOW : force < 100 ? Level.ORANGE : force < 150 ? Level.RED : Level.SCARLET,
-                new RegionI[] { this.stations.get((Integer) message.getPropertyValue("ID")) },
+                ((Position) windData.getPosition()).x < 0
+                        ? MeteoAlertI.AlterType.STORM : MeteoAlertI.AlterType.ICY_STORM,
+                force < 20 ? Level.GREEN : force < 60 ? Level.YELLOW
+                        : force < 100 ? Level.ORANGE : force < 150 ? Level.RED : Level.SCARLET,
+                new RegionI[] { region },
                 Instant.now(),
-                Duration.ofHours(((Position)windData.getPosition()).x % 7) // Why not
+                Duration.ofHours(((Position) windData.getPosition()).x % 7)
         );
         Message msg1 = new Message(alert1);
         msg1.putProperty("type", "alert");
 
-        this.publish_port.publish(RECEIVE_PORT_URI, "channel1", msg1);
-        this.traceMessage("Alert published on 'channel1' - " + alert1 + "\n");
+        this.publicationPlugin.publish(WEATHER_ALERTS_CHANNEL, msg1);
+        this.traceMessage("Alert published on '" + WEATHER_ALERTS_CHANNEL + "' - " + alert1 + "\n");
     }
 
     @Override

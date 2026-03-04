@@ -92,7 +92,6 @@ public class Broker extends AbstractComponent {
 
     @Override
     public synchronized void finalise() throws Exception {
-        System.out.println("R F");
         for (Client client : this.clients.values())
             this.doPortDisconnection(client.port.getPortURI());
         super.finalise();
@@ -100,7 +99,6 @@ public class Broker extends AbstractComponent {
 
     @Override
     public synchronized void shutdown() throws ComponentShutdownException {
-        System.out.println("R S");
         try {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
@@ -124,11 +122,9 @@ public class Broker extends AbstractComponent {
 
         Channel chan = this.channels.get(channel);
 
-        System.out.println("Publish 1");
         for (Subscription entry : chan.subscribers)
             if (entry.filter.match(message))
                 entry.client.port.receive(channel, message);
-        System.out.println("Publish 2");
     }
 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
