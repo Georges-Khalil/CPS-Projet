@@ -39,11 +39,23 @@ public class Bureau extends AbstractComponent implements ClientI {
     /** Plugin for registration. */
     protected ClientRegistrationPlugin registrationPlugin;
 
+    public ClientRegistrationPlugin getRegistrationPlugin() {
+        return registrationPlugin;
+    }
+
     /** Plugin for publication (privileged, PREMIUM). */
     protected ClientPublicationPlugin publicationPlugin;
 
+    public ClientPublicationPlugin getPublicationPlugin() {
+        return publicationPlugin;
+    }
+
     /** Plugin for subscription and receiving. */
     protected ClientSubscriptionPlugin subscriptionPlugin;
+
+    public ClientSubscriptionPlugin getSubscriptionPlugin() {
+        return subscriptionPlugin;
+    }
 
     /** Plugin for privileged channel management. */
     protected ClientPrivilegedPlugin privilegedPlugin;

@@ -29,8 +29,16 @@ public class Station extends AbstractComponent implements ClientI {
     /** Plugin for registration. */
     protected ClientRegistrationPlugin registrationPlugin;
 
+    public ClientRegistrationPlugin getRegistrationPlugin() {
+        return registrationPlugin;
+    }
+
     /** Plugin for publication. */
     protected ClientPublicationPlugin publicationPlugin;
+
+    public ClientPublicationPlugin getPublicationPlugin() {
+        return publicationPlugin;
+    }
 
     /** Plugin for subscription (needed for ReceivingInboundPort). */
     protected ClientSubscriptionPlugin subscriptionPlugin;

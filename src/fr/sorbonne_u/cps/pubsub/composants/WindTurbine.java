@@ -31,8 +31,16 @@ public class WindTurbine extends AbstractComponent implements ClientI {
     /** Plugin for registration. */
     protected ClientRegistrationPlugin registrationPlugin;
 
+    public ClientRegistrationPlugin getRegistrationPlugin() {
+        return registrationPlugin;
+    }
+
     /** Plugin for subscription and receiving. */
     protected ClientSubscriptionPlugin subscriptionPlugin;
+
+    public ClientSubscriptionPlugin getSubscriptionPlugin() {
+        return subscriptionPlugin;
+    }
 
     protected WindTurbine(PositionI position) throws Exception {
         super(1, 0);
