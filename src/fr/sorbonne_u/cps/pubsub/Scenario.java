@@ -31,29 +31,29 @@ public class Scenario {
     /** for test scenarios a {@code Clock} is used to get a time-triggered
      * synchronisation among the actions of components.
      */
-    public static String CLOCK_URI = "test-clock";
+    public String CLOCK_URI = "test-clock";
     /** start virtual instant in the test scenario, as a string to be parsed.
      */
-    public static String START_INSTANT = "2026-03-10T09:00:00.00Z";
+    public String START_INSTANT = "2026-03-10T09:00:00.00Z";
     /** end virtual instant in the test scenario, as a string to be parsed.
      */
-    public static String END_INSTANT = "2026-03-10T09:10:00.00Z";
+    public String END_INSTANT = "2026-03-10T09:10:00.00Z";
     /** A fixed delay, making sure that all components have had time to be created and started
      *  The delay needs to be adjusted depending on how complex the starting phase is.
      */
-    protected static final long DELAY_TO_START = 3000L;
+    protected final long DELAY_TO_START = 3000L;
     /** the acceleration factor applied to the {@code Instant} time
      * reference to run the test faster or slower than real time.
      * THIS NEEDS TO BE MANIPULATED CAREFULLY (Specifications Appendix A)
      */
-    public static double ACCELERATION_FACTOR = 60.0;
+    public double ACCELERATION_FACTOR = 60.0;
 
     // --- Scenarios ---
 
     /**
      * Simple test scenario that registers three components.
      */
-    public static TestScenario simpleRegistrationTest(String windTurbine1_URI, String station1_URI, String bureau1_URI) {
+    public TestScenario simpleRegistrationTest(String windTurbine1_URI, String station1_URI, String bureau1_URI) {
         Instant startInstant = Instant.parse(START_INSTANT);
         Instant endInstant = Instant.parse(END_INSTANT);
         // test values
@@ -129,7 +129,7 @@ public class Scenario {
     /**
      * A more complete test scenario that involves registration, subscription, and publication.
      */
-    public static TestScenario fullOperationTest(String windTurbine1_URI, String station1_URI, String bureau1_URI, String station2_URI) throws VerboseException
+    public TestScenario fullOperationTest(String windTurbine1_URI, String station1_URI, String bureau1_URI, String station2_URI) throws VerboseException
     {
         Instant startInstant = Instant.parse(START_INSTANT);
         Instant endInstant = Instant.parse(END_INSTANT);
