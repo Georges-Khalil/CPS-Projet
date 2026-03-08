@@ -111,12 +111,12 @@ public class ComplexInteractionScenario extends AbstractScenario {
 
         TestScenario testScenario = this.getScenario(turbine1_URI, turbine2_URI, station1_URI, station2_URI, station3_URI, bureau_URI);
 
-        AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[]{turbine1_URI, new Position(10, 10), testScenario});
-        AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[]{turbine2_URI, new Position(-10, -10), testScenario});
-        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[]{station1_URI, new Position(5, 5), testScenario});
-        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[]{station2_URI, new Position(-5, -5), testScenario});
-        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[]{station3_URI, new Position(100, 100), testScenario});
-        AbstractComponent.createComponent(Bureau.class.getCanonicalName(), new Object[]{bureau_URI, testScenario});
+        AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[] { turbine1_URI, new Position(10, 10), testScenario });
+        AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[] { turbine2_URI, new Position(-10, -10), testScenario });
+        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[] { station1_URI, new Position(5, 5), testScenario });
+        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[] { station2_URI, new Position(-5, -5), testScenario });
+        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[] { station3_URI, new Position(100, 100), testScenario });
+        AbstractComponent.createComponent(Bureau.class.getCanonicalName(), new Object[] { bureau_URI, testScenario });
 
         cvm.toggleTracing(turbine1_URI);
         cvm.toggleTracing(turbine2_URI);
@@ -128,7 +128,6 @@ public class ComplexInteractionScenario extends AbstractScenario {
 
     private TestScenario getScenario(String t1, String t2, String s1, String s2, String s3, String b) {
         Instant start = this.startInstant;
-        Instant end = this.endInstant;
 
         // Filters
         MessageFilterI filterHighWind = new MessageFilter(
@@ -151,17 +150,17 @@ public class ComplexInteractionScenario extends AbstractScenario {
         );
 
         return new TestScenario(
-                this.clockURI, start, end,
+                this.clockURI, start, this.endInstant,
                 new TestStepI[]{
                         // 1. Setup Phase
                         new TestStep(this.clockURI, b, start.plusSeconds(10), owner -> bureauSetupStep((Bureau) owner)),
-                        new TestStep(this.clockURI, s1, start.plusSeconds(20), owner -> stationSetupStep((Station) owner)),
-                        new TestStep(this.clockURI, s2, start.plusSeconds(20), owner -> stationSetupStep((Station) owner)),
-                        new TestStep(this.clockURI, s3, start.plusSeconds(20), owner -> stationSetupStep((Station) owner)),
+                        new TestStep(this.clockURI, s1, start.plusSeconds(40), owner -> stationSetupStep((Station) owner)),
+                        new TestStep(this.clockURI, s2, start.plusSeconds(40), owner -> stationSetupStep((Station) owner)),
+                        new TestStep(this.clockURI, s3, start.plusSeconds(40), owner -> stationSetupStep((Station) owner)),
 
                         // 2. Subscriptions Phase
-                        new TestStep(this.clockURI, t1, start.plusSeconds(30), owner -> turbineSubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL, new MessageFilter(), "Subscribed to all wind data")),
-                        new TestStep(this.clockURI, t2, start.plusSeconds(40), owner -> turbineSubscribeStep((WindTurbine) owner, Bureau.WEATHER_ALERTS_CHANNEL, filterHighWind, "Subscribed only to RED/SCARLET alerts")),
+                        new TestStep(this.clockURI, t1, start.plusSeconds(60), owner -> turbineSubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL, new MessageFilter(), "Subscribed to all wind data")),
+                        new TestStep(this.clockURI, t2, start.plusSeconds(80), owner -> turbineSubscribeStep((WindTurbine) owner, Bureau.WEATHER_ALERTS_CHANNEL, filterHighWind, "Subscribed only to RED/SCARLET alerts")),
 
                         // 3. Normal Activity
                         new TestStep(this.clockURI, s1, start.plusSeconds(100), owner -> stationPublishStep((Station) owner, 15.0, 0.0)),
@@ -172,7 +171,7 @@ public class ComplexInteractionScenario extends AbstractScenario {
                         new TestStep(this.clockURI, s1, start.plusSeconds(200), owner -> stationPublishStep((Station) owner, 80.0, 90.0)),
 
                         // 5. Dynamic Changes
-                        new TestStep(this.clockURI, t1, start.plusSeconds(250), owner -> turbineUnsubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL)),
+                        new TestStep(this.clockURI, t1, start.plusSeconds(240), owner -> turbineUnsubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL)),
                         new TestStep(this.clockURI, t1, start.plusSeconds(260), owner -> turbineSubscribeStep((WindTurbine) owner, Bureau.WEATHER_ALERTS_CHANNEL, filterAnyAlert, "Subscribed to all alerts")),
 
                         // 6. Final Activity (Extreme wind)

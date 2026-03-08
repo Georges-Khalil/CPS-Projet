@@ -77,12 +77,13 @@ public class FullOperationScenario extends AbstractScenario {
         }
     }
 
-    static void station1Step(Station station) {
+    static void station1InitStep(Station station) {
         try {
             station.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
             station.getPublicationPlugin().connectToPublishingPort(
                     station.getRegistrationPlugin().getPublishingPortURI());
             station.traceMessage("Station1 : Registered\n");
+
             // Publish a test message with WindData as payload
             Message msg = new Message(new WindData(station.getPosition(), 10.0, 5.0));
             msg.putProperty("Type", "wind");
@@ -105,7 +106,7 @@ public class FullOperationScenario extends AbstractScenario {
         }
     }
 
-    static void stationPubStep(Station station) {
+    static void station1PubStep(Station station) {
         try {
             fr.sorbonne_u.cps.pubsub.message.Message msg = new fr.sorbonne_u.cps.pubsub.message.Message(
                     new fr.sorbonne_u.cps.pubsub.meteo.WindData(
@@ -115,7 +116,7 @@ public class FullOperationScenario extends AbstractScenario {
                     )
             );
             msg.putProperty("Type", "wind");
-            msg.putProperty("ID", 1); // fixed ID for simplicity in test
+            msg.putProperty("ID", station.getUid()); // fixed ID for simplicity in test
             station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
             station.traceMessage("Publish a message on wind_channel - " + msg.getPayload() + "\n");
         } catch (Exception e) {
@@ -137,25 +138,10 @@ public class FullOperationScenario extends AbstractScenario {
 
         TestScenario testScenario = this.getScenario(windTurbine1_URI, station1_URI, bureau1_URI, station2_URI);
 
-        AbstractComponent.createComponent(
-                WindTurbine.class.getCanonicalName(),
-                new Object[] {windTurbine1_URI, new Position(20, 30), testScenario}
-        );
-
-        AbstractComponent.createComponent(
-                Station.class.getCanonicalName(),
-                new Object[] {station1_URI, new Position(0, 0), testScenario}
-        );
-
-        AbstractComponent.createComponent(
-                Station.class.getCanonicalName(),
-                new Object[] {station2_URI, new Position(50, 30), testScenario}
-        );
-
-        AbstractComponent.createComponent(
-                Bureau.class.getCanonicalName(),
-                new Object[] {bureau1_URI, testScenario}
-        );
+        AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[] { windTurbine1_URI, new Position(20, 30), testScenario });
+        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[] { station1_URI, new Position(0, 0), testScenario });
+        AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[] { station2_URI, new Position(50, 30), testScenario });
+        AbstractComponent.createComponent(Bureau.class.getCanonicalName(), new Object[] { bureau1_URI, testScenario });
 
         cvm.toggleTracing(windTurbine1_URI);
         cvm.toggleTracing(station1_URI);
@@ -164,28 +150,20 @@ public class FullOperationScenario extends AbstractScenario {
     }
 
     private TestScenario getScenario(String windTurbine1_URI, String station1_URI, String bureau1_URI, String station2_URI) {
-        Instant startInstant = Instant.now().plus(24, ChronoUnit.HOURS);
-        Instant endInstant = Instant.now().plus(25, ChronoUnit.HOURS);
-
-        // instants for actions
-        Instant bureauRegInstant = startInstant.plusSeconds(200);
-        Instant turbineRegInstant = startInstant.plusSeconds(220);
-        Instant stationRegInstant = startInstant.plusSeconds(240);
-        Instant stationRegInstant2 = startInstant.plusSeconds(260);
-        Instant stationPubInstant = startInstant.plusSeconds(280);
+        Instant start = this.startInstant;
 
         return new TestScenario(
                 this.clockURI,
-                startInstant,
-                endInstant,
+                start,
+                this.endInstant,
                 new TestStepI[]{
-                        new TestStep(this.clockURI, bureau1_URI, bureauRegInstant, owner -> bureauStep((Bureau) owner)),
-                        new TestStep(this.clockURI, windTurbine1_URI, turbineRegInstant, owner -> windTurbineStep((WindTurbine) owner)),
+                        new TestStep(this.clockURI, bureau1_URI, start.plusSeconds(200), owner -> bureauStep((Bureau) owner)),
+                        new TestStep(this.clockURI, windTurbine1_URI, start.plusSeconds(260), owner -> windTurbineStep((WindTurbine) owner)),
 
-                        new TestStep(this.clockURI, station1_URI, stationRegInstant, owner -> station1Step((Station) owner)),
-                        new TestStep(this.clockURI, station2_URI, stationRegInstant2, owner -> station2Step((Station) owner)),
+                        new TestStep(this.clockURI, station1_URI, start.plusSeconds(320), owner -> station1InitStep((Station) owner)),
+                        new TestStep(this.clockURI, station2_URI, start.plusSeconds(380), owner -> station2Step((Station) owner)),
 
-                        new TestStep(this.clockURI, station1_URI, stationPubInstant, owner -> stationPubStep((Station) owner))
+                        new TestStep(this.clockURI, station1_URI, start.plusSeconds(440), owner -> station1PubStep((Station) owner))
                 });
     }
 

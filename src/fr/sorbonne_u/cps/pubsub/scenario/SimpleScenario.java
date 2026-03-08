@@ -15,7 +15,6 @@ import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -51,7 +50,7 @@ public class SimpleScenario extends AbstractScenario {
     }
 
     public SimpleScenario(AbstractCVM cvm) throws Exception {
-        super(3000L, 60.0);
+        super(1000L, 1.0);
 
         // ----- Component URIs and TestScenario -----
         // Warning: each component URI must be unique
@@ -77,20 +76,15 @@ public class SimpleScenario extends AbstractScenario {
     }
 
     private TestScenario getScenario(String windTurbine1_URI, String station_URI) {
-        Instant startInstant = Instant.now().plus(24, ChronoUnit.HOURS);
-        Instant endInstant = Instant.now().plus(25, ChronoUnit.HOURS);
-
-        // instants for actions
-        Instant turbineRegInstant = startInstant.plusSeconds(220);
-        Instant stationRegInstant = startInstant.plusSeconds(240);
+        Instant start = this.startInstant;
 
         return new TestScenario(
                 this.clockURI,
-                startInstant,
-                endInstant,
+                this.startInstant,
+                this.endInstant,
                 new TestStepI[]{
-                        new TestStep(this.clockURI, windTurbine1_URI, turbineRegInstant, owner -> windTurbineStep((WindTurbine) owner)),
-                        new TestStep(this.clockURI, station_URI, stationRegInstant, owner -> stationStep((Station) owner)),
+                        new TestStep(this.clockURI, windTurbine1_URI, start.plusSeconds(1), owner -> windTurbineStep((WindTurbine) owner)),
+                        new TestStep(this.clockURI, station_URI, start.plusSeconds(2), owner -> stationStep((Station) owner)),
                 });
     }
 
