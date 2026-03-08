@@ -21,6 +21,17 @@ import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Full operation test scenario that involves registration, subscription, and publication.
+ * 
+ * Scenario details:
+ * 1. A Bureau registers as PREMIUM, creates the weather alerts channel, and subscribes to the wind channel.
+ * 2. A WindTurbine registers as FREE, subscribes to the wind channel, and also subscribes to the weather alerts
+ *    channel with a specific filter (filtering for alerts that are NOT GREEN).
+ * 3. Station 1 registers as FREE and publishes an initial wind data message.
+ * 4. Station 2 registers as FREE.
+ * 5. Station 1 publishes another wind data message.
+ */
 public class FullOperationScenario extends AbstractScenario {
 
     static void bureauStep(Bureau bureau) {
