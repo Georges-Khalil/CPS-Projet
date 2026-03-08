@@ -29,13 +29,6 @@ public class SimpleScenario extends AbstractScenario {
             wt.traceMessage("WindTurbine : Registered\n");
             wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
             wt.traceMessage("Subscribed to wind_channel\n");
-
-            // Subscribe to wind channel with a large filter
-            MessageFilterI filter = new MessageFilter(
-                    new PropertyFilter("type", new ComparableValueFilter("wind"))
-            );
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, filter);
-            wt.traceMessage("WindTurbine : Subscribed to weather_alerts_channel with filter " + filter + "\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
