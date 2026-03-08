@@ -6,8 +6,6 @@ import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
-import fr.sorbonne_u.cps.pubsub.message.Message;
-import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 import fr.sorbonne_u.utils.aclocks.ClocksServer;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;

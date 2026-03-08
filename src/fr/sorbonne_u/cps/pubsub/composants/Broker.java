@@ -8,7 +8,6 @@ import fr.sorbonne_u.cps.pubsub.exceptions.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
 import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.PublishingInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
 

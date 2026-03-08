@@ -27,7 +27,7 @@ public class CVM extends AbstractCVM {
         // ----- Component URIs and TestScenario -----
         // Warning: each component URI must be unique
         // Warning: all created components need to be present in the test scenario they're given (otherwise assertion error)
-        Scenario scenario = new Scenario();
+        Scenario scenario = new Scenario(); // If we create another Scenario class with a different clock, we can just call another constructor
         String windTurbine1_URI = "windTurbine1";
         String station1_URI = "station1";
         String bureau1_URI = "bureau1";
