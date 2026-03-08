@@ -209,7 +209,7 @@ public class Broker extends AbstractComponent {
         if (filter == null)
             throw new IllegalArgumentException();
         if (subscribed(receptionPortURI, channel))
-            throw new UnknownClientException();
+            throw new RuntimeException("Already Subscribed");
 
         this.channels.get(channel).subscribers.add(new Subscription(this.clients.get(receptionPortURI), filter));
         this.clients.get(receptionPortURI).subscriptions.add(channel);
