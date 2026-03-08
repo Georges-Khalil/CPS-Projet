@@ -2,11 +2,13 @@ package fr.sorbonne_u.cps.pubsub.composants;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
+import fr.sorbonne_u.utils.aclocks.ClocksServer;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;
@@ -22,6 +24,13 @@ public class Station extends AbstractComponent implements ClientI {
 
     protected final PositionI position;
     protected final int uid;
+
+    public int getUid() {
+        return this.uid;
+    }
+    public PositionI getPosition() {
+        return this.position;
+    }
 
     /** URI that identifies this client in the pub/sub system. */
     protected final String receptionPortURI;
@@ -43,9 +52,15 @@ public class Station extends AbstractComponent implements ClientI {
     /** Plugin for subscription (needed for ReceivingInboundPort). */
     protected ClientSubscriptionPlugin subscriptionPlugin;
 
-    protected Station(PositionI position) throws Exception {
-        super(1, 0);
+    /**
+     * Test scenario configuration for the Station component.
+     */
+    protected final TestScenario testScenario;
+
+    protected Station(String reflectionInboundPortURI, PositionI position, TestScenario testScenario) throws Exception {
+        super(reflectionInboundPortURI, 1, 1);
         this.position = position;
+        this.testScenario = testScenario;
         this.uid = URIGenerator.getUID();
 
         this.receptionPortURI = URIGenerator.getNew(this);
@@ -70,25 +85,11 @@ public class Station extends AbstractComponent implements ClientI {
     @Override
     public void execute() throws Exception {
         super.execute();
-
-        // Register with the broker
-        this.registrationPlugin.register(RegistrationCI.RegistrationClass.FREE);
-
-        // Connect the publication plugin to the broker's publishing port
-        this.publicationPlugin.connectToPublishingPort(
-                this.registrationPlugin.getPublishingPortURI());
-        this.traceMessage("Station : Registered\n");
-
-        // Wait for clients to subscribe
-        Thread.sleep(1000);
-
-        // Publish a test message with WindData as payload
-        Message msg = new Message(new WindData(this.position, 10.0, 5.0));
-        msg.putProperty("Type", "wind");
-        msg.putProperty("ID", this.uid);
-
-        this.publicationPlugin.publish(Broker.WIND_CHANNEL, msg);
-        this.traceMessage("Publish a message on wind_channel - " + msg.getPayload() + "\n");
+        // initialise the clock with the given URI, retrieving it from the clock server;
+        // this must be done by the component before running the test scenario
+        this.initialiseClock(ClocksServer.STANDARD_INBOUNDPORT_URI, this.testScenario.getClockURI());
+        // make the component execute its actions in the test scenario
+        this.executeTestScenario(this.testScenario);
     }
 
     @Override

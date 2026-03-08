@@ -14,7 +14,7 @@ public class TestComponent extends AbstractComponent {
 
     TestComponent(TestScenario testScenario) {
         // As specified in the specifications, each component has their test scenario given in the constructor like here.
-        super(1, 0);
+        super(1, 1);
         this.testScenario = testScenario;
     }
 

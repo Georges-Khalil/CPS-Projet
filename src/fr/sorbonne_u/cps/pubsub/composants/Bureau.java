@@ -2,6 +2,7 @@ package fr.sorbonne_u.cps.pubsub.composants;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.RegionI;
 import fr.sorbonne_u.cps.meteo.interfaces.WindDataI;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
@@ -17,6 +18,7 @@ import fr.sorbonne_u.cps.pubsub.plugins.ClientPrivilegedPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;
+import fr.sorbonne_u.utils.aclocks.ClocksServer;
 import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 import java.time.Duration;
@@ -60,10 +62,20 @@ public class Bureau extends AbstractComponent implements ClientI {
     /** Plugin for privileged channel management. */
     protected ClientPrivilegedPlugin privilegedPlugin;
 
+    public ClientPrivilegedPlugin getPrivilegedPlugin() {
+        return privilegedPlugin;
+    }
+
     protected final HashMap<Integer, RegionI> stations;
 
-    protected Bureau() throws Exception {
-        super(1, 0);
+    /**
+     * Test scenario configuration for the Bureau component.
+     */
+    protected final TestScenario testScenario;
+
+    protected Bureau(String reflectionInboundPortURI, TestScenario testScenario) throws Exception {
+        super(reflectionInboundPortURI,1, 1);
+        this.testScenario = testScenario;
 
         this.receptionPortURI = URIGenerator.getNew(this);
 
@@ -94,20 +106,11 @@ public class Bureau extends AbstractComponent implements ClientI {
     @Override
     public void execute() throws Exception {
         super.execute();
-
-        // Register as PREMIUM
-        this.registrationPlugin.register(RegistrationCI.RegistrationClass.PREMIUM);
-
-        // Connect the publication plugin to the broker's publishing port
-        this.publicationPlugin.connectToPublishingPort(
-                this.registrationPlugin.getPublishingPortURI());
-        this.traceMessage("Bureau : Registered\n");
-
-        // Create the weather alerts channel
-        this.privilegedPlugin.createChannel(WEATHER_ALERTS_CHANNEL, ".*");
-
-        // Subscribe to wind channel to monitor stations
-        this.subscriptionPlugin.subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+        // initialise the clock with the given URI, retrieving it from the clock server;
+        // this must be done by the component before running the test scenario
+        this.initialiseClock(ClocksServer.STANDARD_INBOUNDPORT_URI, this.testScenario.getClockURI());
+        // make the component execute its actions in the test scenario
+        this.executeTestScenario(this.testScenario);
     }
 
     @Override

@@ -2,6 +2,7 @@ package fr.sorbonne_u.cps.pubsub.composants;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
 import fr.sorbonne_u.cps.pubsub.filters.*;
@@ -11,6 +12,7 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.PropertiesFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
+import fr.sorbonne_u.utils.aclocks.ClocksServer;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;
 import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
@@ -42,9 +44,15 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         return subscriptionPlugin;
     }
 
-    protected WindTurbine(PositionI position) throws Exception {
-        super(1, 0);
+    /**
+     * Test scenario configuration for the WindTurbine component.
+     */
+    protected final TestScenario testScenario;
+
+    protected WindTurbine(String reflectionInboundPortURI, PositionI position, TestScenario testScenario) throws Exception {
+        super(reflectionInboundPortURI,1, 1);
         this.position = position;
+        this.testScenario = testScenario;
 
         this.receptionPortURI = URIGenerator.getNew(this);
 
@@ -63,28 +71,11 @@ public class WindTurbine extends AbstractComponent implements ClientI {
     @Override
     public void execute() throws Exception {
         super.execute();
-
-        // Register with the broker
-        this.registrationPlugin.register(RegistrationCI.RegistrationClass.FREE);
-        this.traceMessage("WindTurbine : Registered\n");
-
-        // Subscribe to wind channel with accept-all filter
-        this.subscriptionPlugin.subscribe(Broker.WIND_CHANNEL, new MessageFilter());
-        this.traceMessage("Subscribed to wind_channel\n");
-
-        // Subscribe to weather alerts with a specific filter
-        MessageFilterI filter = new MessageFilter(
-            new PropertyFilterI[] {
-                    new PropertyFilter("type", new ComparableValueFilter("alert"))
-            },
-            new PropertiesFilterI[] {
-                    new PropertiesFilter(new MultiValuesFilter<MeteoAlertI>(new String[] {"Data"},
-                        args -> args.get(0).getLevel() != MeteoAlert.Level.GREEN))
-            },
-            TimeFilter.acceptAny()
-        );
-        this.subscriptionPlugin.subscribe(Bureau.WEATHER_ALERTS_CHANNEL, filter);
-        this.traceMessage("Subscribed to weather_alerts_channel with filter: type=alert\n");
+        // initialise the clock with the given URI, retrieving it from the clock server;
+        // this must be done by the component before running the test scenario
+        this.initialiseClock(ClocksServer.STANDARD_INBOUNDPORT_URI, this.testScenario.getClockURI());
+        // make the component execute its actions in the test scenario
+        this.executeTestScenario(this.testScenario);
     }
 
     @Override
