@@ -34,10 +34,10 @@ public class Scenario {
     public static String CLOCK_URI = "test-clock";
     /** start virtual instant in the test scenario, as a string to be parsed.
      */
-    public static String START_INSTANT = "2026-03-09T09:00:00.00Z";
+    public static String START_INSTANT = "2026-03-10T09:00:00.00Z";
     /** end virtual instant in the test scenario, as a string to be parsed.
      */
-    public static String END_INSTANT = "2026-03-09T09:10:00.00Z";
+    public static String END_INSTANT = "2026-03-10T09:10:00.00Z";
     /** A fixed delay, making sure that all components have had time to be created and started
      *  The delay needs to be adjusted depending on how complex the starting phase is.
      */
