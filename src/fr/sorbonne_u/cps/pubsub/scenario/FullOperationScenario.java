@@ -1,0 +1,179 @@
+package fr.sorbonne_u.cps.pubsub.scenario;
+
+import fr.sorbonne_u.components.AbstractComponent;
+import fr.sorbonne_u.components.cvm.AbstractCVM;
+import fr.sorbonne_u.components.utils.tests.TestScenario;
+import fr.sorbonne_u.components.utils.tests.TestStep;
+import fr.sorbonne_u.components.utils.tests.TestStepI;
+import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
+import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.composants.Bureau;
+import fr.sorbonne_u.cps.pubsub.composants.Station;
+import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.filters.*;
+import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
+import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
+import fr.sorbonne_u.cps.pubsub.message.Message;
+import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
+import fr.sorbonne_u.cps.pubsub.meteo.Position;
+import fr.sorbonne_u.cps.pubsub.meteo.WindData;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
+public class FullOperationScenario extends AbstractScenario {
+
+    static void bureauStep(Bureau bureau) {
+        try {
+            bureau.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.PREMIUM);
+            bureau.getPublicationPlugin().connectToPublishingPort(
+                    bureau.getRegistrationPlugin().getPublishingPortURI());
+            bureau.traceMessage("Bureau : Registered as PREMIUM\n");
+            // Create the weather alerts channel
+            bureau.getPrivilegedPlugin().createChannel(Bureau.WEATHER_ALERTS_CHANNEL, ".*");
+            bureau.traceMessage("Bureau : Created weather_alert_channel\n");
+            bureau.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            bureau.traceMessage("Bureau : Subscribed to wind_channel\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static void windTurbineStep(WindTurbine wt) {
+        try {
+            wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
+            wt.traceMessage("WindTurbine : Registered\n");
+            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.traceMessage("Subscribed to wind_channel\n");
+
+            // Subscribe to weather alerts with a specific filter
+            MessageFilterI filter = new MessageFilter(
+                    new MessageFilterI.PropertyFilterI[]{
+                            new PropertyFilter("type", new ComparableValueFilter("alert"))
+                    },
+                    new MessageFilterI.PropertiesFilterI[]{
+                            new PropertiesFilter(new MultiValuesFilter<MeteoAlertI>(new String[]{"Data"},
+                                    args -> args.get(0).getLevel() != MeteoAlert.Level.GREEN))
+                    },
+                    TimeFilter.acceptAny()
+            );
+            wt.getSubscriptionPlugin().subscribe(Bureau.WEATHER_ALERTS_CHANNEL, filter);
+            wt.traceMessage("WindTurbine : Subscribed to weather_alerts_channel with filter " + filter + "\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static void station1Step(Station station) {
+        try {
+            station.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
+            station.getPublicationPlugin().connectToPublishingPort(
+                    station.getRegistrationPlugin().getPublishingPortURI());
+            station.traceMessage("Station1 : Registered\n");
+            // Publish a test message with WindData as payload
+            Message msg = new Message(new WindData(station.getPosition(), 10.0, 5.0));
+            msg.putProperty("Type", "wind");
+            msg.putProperty("ID", station.getUid());
+            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.traceMessage("Station1 : Publish a message on wind_channel - " + msg.getPayload() + "\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static void station2Step(Station station) {
+        try {
+            station.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
+            station.getPublicationPlugin().connectToPublishingPort(
+                    station.getRegistrationPlugin().getPublishingPortURI());
+            station.traceMessage("Station2 : Registered\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static void stationPubStep(Station station) {
+        try {
+            fr.sorbonne_u.cps.pubsub.message.Message msg = new fr.sorbonne_u.cps.pubsub.message.Message(
+                    new fr.sorbonne_u.cps.pubsub.meteo.WindData(
+                            new fr.sorbonne_u.cps.pubsub.meteo.Position(10, 20),
+                            10.0,
+                            5.0
+                    )
+            );
+            msg.putProperty("Type", "wind");
+            msg.putProperty("ID", 1); // fixed ID for simplicity in test
+            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.traceMessage("Publish a message on wind_channel - " + msg.getPayload() + "\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public FullOperationScenario(AbstractCVM cvm) throws Exception {
+        super(3000L, 60.0);
+
+        // ----- Component URIs and TestScenario -----
+        // Warning: each component URI must be unique
+        // Warning: all created components need to be present in the test scenario they're given (otherwise assertion error)
+
+        String windTurbine1_URI = "windTurbine1";
+        String station1_URI = "station1";
+        String bureau1_URI = "bureau1";
+        String station2_URI = "station2";
+
+        TestScenario testScenario = this.getScenario(windTurbine1_URI, station1_URI, bureau1_URI, station2_URI);
+
+        AbstractComponent.createComponent(
+                WindTurbine.class.getCanonicalName(),
+                new Object[] {windTurbine1_URI, new Position(20, 30), testScenario}
+        );
+
+        AbstractComponent.createComponent(
+                Station.class.getCanonicalName(),
+                new Object[] {station1_URI, new Position(0, 0), testScenario}
+        );
+
+        AbstractComponent.createComponent(
+                Station.class.getCanonicalName(),
+                new Object[] {station2_URI, new Position(50, 30), testScenario}
+        );
+
+        AbstractComponent.createComponent(
+                Bureau.class.getCanonicalName(),
+                new Object[] {bureau1_URI, testScenario}
+        );
+
+        cvm.toggleTracing(windTurbine1_URI);
+        cvm.toggleTracing(station1_URI);
+        cvm.toggleTracing(station2_URI);
+        cvm.toggleTracing(bureau1_URI);
+    }
+
+    private TestScenario getScenario(String windTurbine1_URI, String station1_URI, String bureau1_URI, String station2_URI) {
+        Instant startInstant = Instant.now().plus(24, ChronoUnit.HOURS);
+        Instant endInstant = Instant.now().plus(25, ChronoUnit.HOURS);
+
+        // instants for actions
+        Instant bureauRegInstant = startInstant.plusSeconds(200);
+        Instant turbineRegInstant = startInstant.plusSeconds(220);
+        Instant stationRegInstant = startInstant.plusSeconds(240);
+        Instant stationRegInstant2 = startInstant.plusSeconds(260);
+        Instant stationPubInstant = startInstant.plusSeconds(280);
+
+        return new TestScenario(
+                this.clockURI,
+                startInstant,
+                endInstant,
+                new TestStepI[]{
+                        new TestStep(this.clockURI, bureau1_URI, bureauRegInstant, owner -> bureauStep((Bureau) owner)),
+                        new TestStep(this.clockURI, windTurbine1_URI, turbineRegInstant, owner -> windTurbineStep((WindTurbine) owner)),
+
+                        new TestStep(this.clockURI, station1_URI, stationRegInstant, owner -> station1Step((Station) owner)),
+                        new TestStep(this.clockURI, station2_URI, stationRegInstant2, owner -> station2Step((Station) owner)),
+
+                        new TestStep(this.clockURI, station1_URI, stationPubInstant, owner -> stationPubStep((Station) owner))
+                });
+    }
+
+}
