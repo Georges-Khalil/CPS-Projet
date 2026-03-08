@@ -4,7 +4,7 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
-import fr.sorbonne_u.cps.pubsub.scenario.FullOperationScenario;
+import fr.sorbonne_u.cps.pubsub.scenario.ComplexInteractionScenario;
 import fr.sorbonne_u.utils.aclocks.ClocksServer;
 
 import java.util.concurrent.TimeUnit;
@@ -28,7 +28,10 @@ public class CVM extends AbstractCVM {
                 new Object[]{}
         );
 
-        AbstractScenario scenario = new FullOperationScenario(this);
+        // ----- Choose the test scenario -----
+        // AbstractScenario scenario = new SimpleScenario(this);
+        // AbstractScenario scenario = new FullOperationScenario(this);
+        AbstractScenario scenario = new ComplexInteractionScenario(this);
 
         // create the clock server and the clock used to synchronise the
         // components actions in the test scenario
