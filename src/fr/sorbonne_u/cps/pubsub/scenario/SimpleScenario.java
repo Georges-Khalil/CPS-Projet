@@ -5,22 +5,21 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
-import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Bureau;
 import fr.sorbonne_u.cps.pubsub.composants.Station;
 import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.*;
-import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
-import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class SimpleScenario extends AbstractScenario {
 
     static void windTurbineStep(WindTurbine wt) {

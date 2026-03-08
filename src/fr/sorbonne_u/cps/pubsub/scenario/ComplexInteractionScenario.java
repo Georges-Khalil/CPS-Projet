@@ -35,6 +35,7 @@ import java.time.Instant;
  *    subscription to receive all weather alerts.
  * 6. Final Activity: Station 3 publishes extreme wind data (160.0), triggering further alerts.
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class ComplexInteractionScenario extends AbstractScenario {
 

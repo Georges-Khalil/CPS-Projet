@@ -3,6 +3,9 @@ package fr.sorbonne_u.cps.pubsub.scenario;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public abstract class AbstractScenario {
 
     // Right now, everything is below the CVM, but all elements could just be fields from this class.

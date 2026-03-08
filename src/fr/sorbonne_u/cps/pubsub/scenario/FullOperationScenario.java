@@ -31,6 +31,8 @@ import java.time.temporal.ChronoUnit;
  * 3. Station 1 registers as FREE and publishes an initial wind data message.
  * 4. Station 2 registers as FREE.
  * 5. Station 1 publishes another wind data message.
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class FullOperationScenario extends AbstractScenario {
 
