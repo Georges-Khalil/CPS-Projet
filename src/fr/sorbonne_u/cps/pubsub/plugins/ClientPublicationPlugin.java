@@ -234,4 +234,24 @@ implements	ClientPublicationI
 			throw new RuntimeException(e);
 		}
 	}
+
+    @Override
+    public void asyncPublishAndNotify(String channel, MessageI message) {
+        try {
+            String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
+            this.publishingOutboundPort.asyncPublishAndNotify(receptionPortURI, channel, message, receptionPortURI);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void asyncPublishAndNotify(String channel, ArrayList<MessageI> messages) {
+        try {
+            String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
+            this.publishingOutboundPort.asyncPublishAndNotify(receptionPortURI, channel, messages, receptionPortURI); // TODO Reception port URI ??
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

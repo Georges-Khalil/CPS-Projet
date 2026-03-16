@@ -92,4 +92,22 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
 
          */
     }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) throws Exception {
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).asyncPublishAndNotify(receptionPortURI, channel, message, notificationInboundPortURI);
+                    return null;
+                });
+    }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) throws Exception {
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).asyncPublishAndNotify(receptionPortURI, channel, messages, notificationInboundPortURI);
+                    return null;
+                });
+    }
 }

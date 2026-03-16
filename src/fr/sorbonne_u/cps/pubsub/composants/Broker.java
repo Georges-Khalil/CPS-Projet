@@ -311,4 +311,13 @@ public class Broker extends AbstractComponent {
         for (Subscription sub : chan.subscribers)
             sub.client.subscriptions.remove(channel);
     }
+
+
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) {
+
+    }
+
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) {
+
+    }
 }

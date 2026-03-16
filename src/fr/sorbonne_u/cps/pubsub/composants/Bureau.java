@@ -150,7 +150,7 @@ public class Bureau extends AbstractComponent implements ClientI {
 
         MeteoAlert alert1 = new MeteoAlert(
                 ((Position) windData.getPosition()).x < 0
-                        ? MeteoAlertI.AlterType.STORM : MeteoAlertI.AlterType.ICY_STORM,
+                        ? MeteoAlertI.AlertType.STORM : MeteoAlertI.AlertType.ICY_STORM,
                 force < 20 ? Level.GREEN : force < 60 ? Level.YELLOW
                         : force < 100 ? Level.ORANGE : force < 150 ? Level.RED : Level.SCARLET,
                 new RegionI[] { region },

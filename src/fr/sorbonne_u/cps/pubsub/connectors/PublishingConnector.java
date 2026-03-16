@@ -21,4 +21,14 @@ public class PublishingConnector extends AbstractConnector implements Publishing
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
         ((PublishingCI) this.offering).publish(receptionPortURI, channel, messages);
     }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInbounhdPortURI) throws Exception {
+        ((PublishingCI) this.offering).asyncPublishAndNotify(receptionPortURI, channel, message, notificationInbounhdPortURI);
+    }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInbounhdPortURI) throws Exception {
+        ((PublishingCI) this.offering).asyncPublishAndNotify(receptionPortURI, channel, messages, notificationInbounhdPortURI);
+    }
 }

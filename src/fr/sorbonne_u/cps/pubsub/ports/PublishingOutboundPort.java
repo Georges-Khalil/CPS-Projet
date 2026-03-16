@@ -37,4 +37,14 @@ public class PublishingOutboundPort extends AbstractOutboundPort implements Publ
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
         ((PublishingCI) this.getConnector()).publish(receptionPortURI, channel, messages);
     }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) throws Exception {
+        ((PublishingCI) this.getConnector()).asyncPublishAndNotify(receptionPortURI, channel, message, notificationInboundPortURI);
+    }
+
+    @Override
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) throws Exception {
+        ((PublishingCI) this.getConnector()).asyncPublishAndNotify(receptionPortURI, channel, messages, notificationInboundPortURI);
+    }
 }
