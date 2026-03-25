@@ -10,9 +10,13 @@ import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
+import fr.sorbonne_u.utils.Pair;
 
 import java.security.acl.NotOwnerException;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The broker of the publication / subscription system.
@@ -29,13 +33,13 @@ public class Broker extends AbstractComponent {
         final String receiving_uri;
         final ReceivingOutboundPort port;
         final List<String> subscriptions;
-        RegistrationCI.RegistrationClassI rc;
+        volatile RegistrationCI.RegistrationClassI rc;
 
         Client(String receivingUri, ReceivingOutboundPort port, RegistrationCI.RegistrationClassI rc) {
             this.receiving_uri = receivingUri;
             this.port = port;
             this.rc = rc;
-            this.subscriptions = new ArrayList<>();
+            this.subscriptions = Collections.synchronizedList(new ArrayList<>());
         }
     }
 
@@ -51,12 +55,12 @@ public class Broker extends AbstractComponent {
 
     static class Channel {
         final String owner_uri;
-        List<Subscription> subscribers;
-        List<String> whitelist;
+        final List<Subscription> subscribers;
+        volatile List<String> whitelist;
 
         Channel(String owner_uri, String whitelist) {
             this.owner_uri = owner_uri;
-            this.subscribers = new ArrayList<>();
+            this.subscribers = new ArrayList<>(); // TODO: better list ?
             this.setWhiteList(whitelist);
         }
 
@@ -72,18 +76,26 @@ public class Broker extends AbstractComponent {
 
     protected final PrivilegedClientInboundPort bpip;
     protected final RegistrationInboundPort brip;
-    protected final HashMap<String, Channel> channels;
-    protected final HashMap<String, Client> clients;
+
+    protected final ConcurrentHashMap<String, Channel> channels;
+    protected final ConcurrentHashMap<String, Client> clients;
+    protected final ReadWriteLock rw_lock;
+
+    protected ExecutorService reception_pool, delivery_pool;
 
     protected Broker() throws Exception {
-        super(1, 0);
+        super(1, 1);
         this.bpip = new PrivilegedClientInboundPort(BROKER_PUBLISH_URI, this);
         this.brip = new RegistrationInboundPort(BROKER_REGISTRATION_URI, this);
         this.bpip.publishPort();
         this.brip.publishPort();
 
-        this.channels = new HashMap<>();
-        this.clients = new HashMap<>();
+        this.channels = new ConcurrentHashMap<>();
+        this.clients = new ConcurrentHashMap<>();
+        this.rw_lock = new ReentrantReadWriteLock();
+
+        this.reception_pool = Executors.newFixedThreadPool(2);
+        this.delivery_pool = Executors.newFixedThreadPool(4);
 
         // Default channels
         this.channels.put(WIND_CHANNEL, new Channel(null, ""));
@@ -99,6 +111,11 @@ public class Broker extends AbstractComponent {
     @Override
     public synchronized void shutdown() throws ComponentShutdownException {
         try {
+            this.reception_pool.shutdown();
+            this.delivery_pool.shutdown();
+            this.reception_pool.awaitTermination(1, TimeUnit.SECONDS);
+            this.delivery_pool.awaitTermination(1, TimeUnit.SECONDS);
+
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
             for (Client client : this.clients.values())
@@ -114,16 +131,47 @@ public class Broker extends AbstractComponent {
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         if (message == null)
             throw new IllegalArgumentException();
-        if (!registered(receptionPortURI))
-            throw new UnknownClientException();
-        if (!channelExist(channel))
-            throw new UnknownChannelException();
 
-        Channel chan = this.channels.get(channel);
+        rw_lock.readLock().lock();
+        try {
+            if (!registered(receptionPortURI))
+                throw new UnknownClientException();
+            if (!channelExist(channel))
+                throw new UnknownChannelException();
+        } finally {
+            rw_lock.readLock().unlock();
+        }
+
+        reception_pool.submit(() -> {
+            try {
+                propagateMessage(channel, message);
+            } catch (Exception e) {
+                this.traceMessage("Propagation error: " + e.getMessage() + "\n");
+            }
+        });
+    }
+
+    protected void propagateMessage(String channel, MessageI message) throws UnknownChannelException {
+        Channel chan;
+        rw_lock.readLock().lock();
+        try {
+            chan = channels.get(channel);
+            if (chan == null)
+                throw new UnknownChannelException();
+        } finally {
+            rw_lock.readLock().unlock();
+        }
 
         for (Subscription entry : chan.subscribers)
             if (entry.filter.match(message))
-                entry.client.port.receive(channel, message);
+                delivery_pool.submit(() -> {
+                    try {
+                        entry.client.port.receive(channel, message);
+                    } catch (Exception e) {
+                        this.traceMessage("Delivery error to "
+                                + entry.client.receiving_uri + ": " + e.getMessage() + "\n");
+                    }
+                });
     }
 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
@@ -139,7 +187,7 @@ public class Broker extends AbstractComponent {
     public boolean registered(String receptionPortURI) throws Exception {
         if (receptionPortURI == null || receptionPortURI.isEmpty())
             throw new IllegalArgumentException();
-        return this.clients.containsKey(receptionPortURI);
+        return this.clients.containsKey(receptionPortURI); // TODO: lock fo each use of client & channels
     }
 
     public boolean registered(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
