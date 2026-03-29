@@ -99,6 +99,12 @@ implements	ClientPublicationI
 	 * @throws Exception		if the connection fails.
 	 */
 	public void connectToPublishingPort(String publishingPortURI) throws Exception {
+		if (this.publishingOutboundPort.connected()) {
+			this.getOwner().doPortDisconnection(
+					this.publishingOutboundPort.getPortURI());
+			this.connected = false;
+		}
+
 		if (this.registrationClass == RegistrationClass.FREE) {
 			this.getOwner().doPortConnection(
 					this.publishingOutboundPort.getPortURI(),
