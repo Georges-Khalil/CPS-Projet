@@ -150,11 +150,11 @@ implements	PrivilegedClientI
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			this.getPrivilegedPort().createChannel(uri, channel, autorisedUsers);
 		} catch (UnknownClientException e) {
-			throw e;
+            throw e;
 		} catch (AlreadyExistingChannelException e) {
-			throw e;
+            throw e;
 		} catch (ChannelQuotaExceededException e) {
-			throw e;
+            throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

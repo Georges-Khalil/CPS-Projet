@@ -8,6 +8,8 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
  */
 public class PrivilegedClientOutboundPort extends PublishingOutboundPort implements PrivilegedClientCI {
     // TODO: Vérifier, peut-on extend PublishingOutboundPort? N'y a-t-il pas des problèmes dans le calcul d'instances
+
+    // TODO: How should it behave when there is no connector? --> Actuellement on a des nullpointer exceptions
     public PrivilegedClientOutboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PrivilegedClientCI.class, owner);
     }

@@ -55,6 +55,8 @@ public class SecurityTestScenario extends AbstractScenario {
         try {
             // Register as FREE instead of PREMIUM
             bureau.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
+            bureau.getPublicationPlugin().connectToPublishingPort(
+                    bureau.getRegistrationPlugin().getPublishingPortURI());
             bureau.traceMessage("Bureau: Registered as FREE. Now trying to create a channel (privileged)...\n");
             
             boolean caught = false;

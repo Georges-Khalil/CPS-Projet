@@ -40,11 +40,11 @@ public class CVM extends AbstractCVM {
 
         // ----- Choose the test scenario -----
         // AbstractScenario scenario = new SimpleScenario(this);
-         AbstractScenario scenario = new AsyncAuditScenario(this);
+        // AbstractScenario scenario = new AsyncAuditScenario(this);
         //AbstractScenario scenario = new AsyncErrorScenario(this);
         // AbstractScenario scenario = new FullOperationScenario(this);
         // AbstractScenario scenario = new ComplexInteractionScenario(this);
-        // AbstractScenario scenario = new SecurityTestScenario(this);
+        AbstractScenario scenario = new SecurityTestScenario(this);
         // AbstractScenario scenario = new LargeScaleScenario(this);
         // AbstractScenario scenario = new ChannelManagementScenario(this);
         // AbstractScenario scenario = new FilterModificationScenario(this);
