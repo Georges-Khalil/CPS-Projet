@@ -3,6 +3,7 @@ package fr.sorbonne_u.cps.pubsub;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.scenario.AsyncAuditScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.ChannelManagementScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.ComplexInteractionScenario;
@@ -38,13 +39,14 @@ public class CVM extends AbstractCVM {
 
         // ----- Choose the test scenario -----
         // AbstractScenario scenario = new SimpleScenario(this);
+        AbstractScenario scenario = new AsyncAuditScenario(this);
         // AbstractScenario scenario = new FullOperationScenario(this);
         // AbstractScenario scenario = new ComplexInteractionScenario(this);
         // AbstractScenario scenario = new SecurityTestScenario(this);
         // AbstractScenario scenario = new LargeScaleScenario(this);
         // AbstractScenario scenario = new ChannelManagementScenario(this);
         // AbstractScenario scenario = new FilterModificationScenario(this);
-         AbstractScenario scenario = new MultipleSubscriptionScenario(this);
+        // AbstractScenario scenario = new MultipleSubscriptionScenario(this);
         // AbstractScenario scenario = new UnregisterRedeployScenario(this);
         //AbstractScenario scenario = new ServiceClassUpgradeScenario(this);
 

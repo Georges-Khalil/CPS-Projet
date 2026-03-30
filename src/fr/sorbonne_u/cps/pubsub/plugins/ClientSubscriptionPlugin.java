@@ -1,7 +1,14 @@
 package fr.sorbonne_u.cps.pubsub.plugins;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import fr.sorbonne_u.components.AbstractPlugin;
 import fr.sorbonne_u.components.ComponentI;
@@ -39,6 +46,15 @@ implements	ClientSubscriptionI
 
 	/** Default URI for this plugin. */
 	public static final String PLUGIN_URI = "client-subscription-plugin";
+	public static final String RECEIVING_TASKS_URI = "client-subscription-receiving";
+
+	protected static class ChannelState {
+		final ArrayDeque<CompletableFuture<MessageI>> pendingRequests;
+
+		ChannelState() {
+			this.pendingRequests = new ArrayDeque<>();
+		}
+	}
 
 	/** The inbound port for receiving messages from the broker. */
 	protected ReceivingInboundPort receivingInboundPort;
@@ -48,6 +64,7 @@ implements	ClientSubscriptionI
 
 	/** Reference to the registration plugin on the same component. */
 	protected ClientRegistrationPlugin registrationPlugin;
+	protected final ConcurrentHashMap<String, ChannelState> channelStates;
 
 	// -------------------------------------------------------------------------
 	// Constructors
@@ -63,6 +80,7 @@ implements	ClientSubscriptionI
 		super();
 		this.setPluginURI(PLUGIN_URI);
 		this.receivingPortURI = receivingPortURI;
+		this.channelStates = new ConcurrentHashMap<>();
 	}
 
 	/**
@@ -96,6 +114,7 @@ implements	ClientSubscriptionI
 
 	@Override
 	public void initialise() throws Exception {
+		this.createNewExecutorService(RECEIVING_TASKS_URI, 1, false);
 		super.initialise();
 	}
 
@@ -257,19 +276,107 @@ implements	ClientSubscriptionI
 
 	@Override
 	public void receive(String channel, MessageI message) {
-		try {
-			((ClientI) this.getOwner()).receiveOne(channel, message);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		if (!this.tryDispatchReservedMessage(channel, message)) {
+			try {
+				((ClientI) this.getOwner()).receiveOne(channel, message);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
 	@Override
 	public void receive(String channel, MessageI[] messages) {
+		if (messages == null || messages.length == 0)
+			return;
+
+		ArrayList<MessageI> passiveMessages = new ArrayList<>();
+		for (MessageI message : messages)
+			if (!this.tryDispatchReservedMessage(channel, message))
+				passiveMessages.add(message);
+
+		if (passiveMessages.isEmpty())
+			return;
+
 		try {
-			((ClientI) this.getOwner()).receiveMultiple(channel, messages);
+			if (passiveMessages.size() == 1)
+				((ClientI) this.getOwner()).receiveOne(channel, passiveMessages.get(0));
+			else
+				((ClientI) this.getOwner()).receiveMultiple(
+						channel,
+						passiveMessages.toArray(new MessageI[0]));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	protected boolean tryDispatchReservedMessage(String channel, MessageI message) {
+		ChannelState state = this.getChannelState(channel);
+		CompletableFuture<MessageI> reservation;
+
+		synchronized (state) {
+			reservation = state.pendingRequests.pollFirst();
+			while (reservation != null && !reservation.complete(message))
+				reservation = state.pendingRequests.pollFirst();
+		}
+
+		return reservation != null;
+	}
+
+	protected ChannelState getChannelState(String channel) {
+		return this.channelStates.computeIfAbsent(channel, ignored -> new ChannelState());
+	}
+
+	protected CompletableFuture<MessageI> reserveNextMessage(String channel) {
+		ChannelState state = this.getChannelState(channel);
+		CompletableFuture<MessageI> future = new CompletableFuture<>();
+
+		synchronized (state) {
+			state.pendingRequests.addLast(future);
+		}
+
+		return future;
+	}
+
+	protected void validateReservationChannel(String channel)
+	throws UnknownClientException, UnknownChannelException,
+			UnauthorisedClientException, NotSubscribedChannelException {
+		if (channel == null || channel.isEmpty())
+			throw new IllegalArgumentException();
+		if (!this.subscribed(channel))
+			throw new NotSubscribedChannelException();
+	}
+
+	protected MessageI awaitReservedMessage(CompletableFuture<MessageI> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e.getCause());
+		}
+	}
+
+	protected MessageI awaitReservedMessage(
+		String channel,
+		CompletableFuture<MessageI> future,
+		Duration duration
+	) {
+		try {
+			return future.get(duration.toNanos(), TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e.getCause());
+		} catch (TimeoutException e) {
+			ChannelState state = this.getChannelState(channel);
+			synchronized (state) {
+				state.pendingRequests.remove(future);
+			}
+			future.cancel(false);
+			return null;
 		}
 	}
 
@@ -281,23 +388,25 @@ implements	ClientSubscriptionI
 	public MessageI waitForNextMessage(String channel)
 	throws UnknownClientException, UnknownChannelException,
 			UnauthorisedClientException, NotSubscribedChannelException {
-		throw new UnsupportedOperationException(
-				"waitForNextMessage not yet implemented (section 3.5.3)");
+		this.validateReservationChannel(channel);
+		return this.awaitReservedMessage(this.reserveNextMessage(channel));
 	}
 
 	@Override
 	public MessageI waitForNextMessage(String channel, Duration d)
 	throws UnknownClientException, UnknownChannelException,
 			UnauthorisedClientException, NotSubscribedChannelException {
-		throw new UnsupportedOperationException(
-				"waitForNextMessage with timeout not yet implemented (section 3.5.3)");
+		if (d == null || d.isZero() || d.isNegative())
+			throw new IllegalArgumentException();
+		this.validateReservationChannel(channel);
+		return this.awaitReservedMessage(channel, this.reserveNextMessage(channel), d);
 	}
 
 	@Override
 	public Future<MessageI> getNextMessage(String channel)
 	throws UnknownClientException, UnknownChannelException,
 			UnauthorisedClientException, NotSubscribedChannelException {
-		throw new UnsupportedOperationException(
-				"getNextMessage not yet implemented (section 3.5.3)");
+		this.validateReservationChannel(channel);
+		return this.reserveNextMessage(channel);
 	}
 }

@@ -44,7 +44,7 @@ public class Broker extends AbstractComponent {
 
     static class Subscription {
         final Client client;
-        MessageFilterI filter;
+        volatile MessageFilterI filter;
 
         Subscription(Client client, MessageFilterI filter) {
             this.client = client;
@@ -72,6 +72,9 @@ public class Broker extends AbstractComponent {
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
 
     private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
+    private static final int RECEPTION_POOL_SIZE = 2;
+    private static final int PROPAGATION_POOL_SIZE = 2;
+    private static final int DELIVERY_POOL_SIZE = 4;
 
     protected final PrivilegedClientInboundPort bpip;
     protected final RegistrationInboundPort brip;
@@ -80,7 +83,7 @@ public class Broker extends AbstractComponent {
     protected final HashMap<String, Client> clients;
     protected final ReadWriteLock channels_lock, clients_lock;
 
-    protected ExecutorService reception_pool, delivery_pool;
+    protected ExecutorService reception_pool, propagation_pool, delivery_pool;
 
     protected Broker() throws Exception {
         super(1, 1);
@@ -94,8 +97,9 @@ public class Broker extends AbstractComponent {
         this.channels_lock = new ReentrantReadWriteLock();
         this.clients_lock = new ReentrantReadWriteLock();
 
-        this.reception_pool = Executors.newFixedThreadPool(2);
-        this.delivery_pool = Executors.newFixedThreadPool(4);
+        this.reception_pool = Executors.newFixedThreadPool(RECEPTION_POOL_SIZE);
+        this.propagation_pool = Executors.newFixedThreadPool(PROPAGATION_POOL_SIZE);
+        this.delivery_pool = Executors.newFixedThreadPool(DELIVERY_POOL_SIZE);
 
         // Default channels
         this.channels.put(WIND_CHANNEL, new Channel(null, ""));
@@ -112,8 +116,10 @@ public class Broker extends AbstractComponent {
     public synchronized void shutdown() throws ComponentShutdownException {
         try {
             this.reception_pool.shutdown();
+            this.propagation_pool.shutdown();
             this.delivery_pool.shutdown();
             this.reception_pool.awaitTermination(1, TimeUnit.SECONDS);
+            this.propagation_pool.awaitTermination(1, TimeUnit.SECONDS);
             this.delivery_pool.awaitTermination(1, TimeUnit.SECONDS);
 
             this.bpip.unpublishPort();
@@ -132,54 +138,72 @@ public class Broker extends AbstractComponent {
         if (message == null)
             throw new IllegalArgumentException();
 
-        this.channels_lock.readLock().lock();
-        try {
-            if (!registered(receptionPortURI))
-                throw new UnknownClientException();
-            if (!channelExist(channel))
-                throw new UnknownChannelException();
-        } finally {
-            this.channels_lock.readLock().unlock();
-        }
+        this.validatePublicationRequest(receptionPortURI, channel);
+        this.submitPublication(channel, Collections.singletonList(message));
+    }
 
-        reception_pool.submit(() -> {
-            try {
-                propagateMessage(channel, message);
-            } catch (Exception e) {
-                this.traceMessage("Propagation error: " + e.getMessage() + "\n");
-            }
-        });
+    protected void validatePublicationRequest(String receptionPortURI, String channel) throws Exception {
+        if (receptionPortURI == null || receptionPortURI.isEmpty() || channel == null || channel.isEmpty())
+            throw new IllegalArgumentException();
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        if (!channelExist(channel))
+            throw new UnknownChannelException();
+    }
+
+    protected void submitPublication(String channel, List<MessageI> messages) {
+        this.reception_pool.submit(() -> this.acceptPublication(channel, messages));
+    }
+
+    protected void acceptPublication(String channel, List<MessageI> messages) {
+        for (MessageI message : messages) {
+            this.propagation_pool.submit(() -> {
+                try {
+                    this.propagateMessage(channel, message);
+                } catch (Exception e) {
+                    this.traceMessage("Propagation error: " + e.getMessage() + "\n");
+                }
+            });
+        }
     }
 
     protected void propagateMessage(String channel, MessageI message) throws UnknownChannelException {
+        List<Subscription> subscribers;
+
         this.channels_lock.readLock().lock();
         try {
             Channel chan = channels.get(channel);
             if (chan == null)
                 throw new UnknownChannelException();
-
-            for (Subscription entry : chan.subscribers)
-                if (entry.filter.match(message))
-                    delivery_pool.submit(() -> {
-                        try {
-                            entry.client.port.receive(channel, message);
-                        } catch (Exception e) {
-                            this.traceMessage("Delivery error to "
-                                    + entry.client.receiving_uri + ": " + e.getMessage() + "\n");
-                        }
-                    });
+            subscribers = new ArrayList<>(chan.subscribers);
         } finally {
             this.channels_lock.readLock().unlock();
         }
 
+        for (Subscription entry : subscribers)
+            if (entry.filter.match(message))
+                this.delivery_pool.submit(() -> this.deliverMessage(channel, message, entry.client));
+
+    }
+
+    protected void deliverMessage(String channel, MessageI message, Client client) {
+        try {
+            client.port.receive(channel, message);
+        } catch (Exception e) {
+            this.traceMessage("Delivery error to "
+                    + client.receiving_uri + ": " + e.getMessage() + "\n");
+        }
     }
 
     public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
-        if (messages == null)
+        if (messages == null || messages.isEmpty())
             throw new IllegalArgumentException();
+        for (MessageI message : messages)
+            if (message == null)
+                throw new IllegalArgumentException();
 
-        for (MessageI m : messages)
-            publish(receptionPortURI, channel, m);
+        this.validatePublicationRequest(receptionPortURI, channel);
+        this.submitPublication(channel, new ArrayList<>(messages));
     }
 
     // ---- Registering ----
@@ -454,10 +478,22 @@ public class Broker extends AbstractComponent {
 
 
     public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) {
-        // TODO
+        try {
+            if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
+                throw new IllegalArgumentException();
+            this.publish(receptionPortURI, channel, message);
+        } catch (Exception e) {
+            this.traceMessage("Async publication error: " + e.getMessage() + "\n");
+        }
     }
 
     public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) {
-        // TODO
+        try {
+            if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
+                throw new IllegalArgumentException();
+            this.publish(receptionPortURI, channel, messages);
+        } catch (Exception e) {
+            this.traceMessage("Async publication error: " + e.getMessage() + "\n");
+        }
     }
 }

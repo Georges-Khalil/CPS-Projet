@@ -1,10 +1,12 @@
 package fr.sorbonne_u.cps.pubsub.ports;
 
+import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.cps.pubsub.composants.ClientI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
+import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -23,20 +25,30 @@ public class ReceivingInboundPort extends AbstractInboundPort implements Receivi
 
     @Override
     public void receive(String channel, MessageI message) throws Exception {
-        this.getOwner().handleRequest(
-                c -> {
-                    ((ClientI) c).receiveOne(channel, message);
-                    return null;
+        this.getOwner().runTask(
+                ClientSubscriptionPlugin.RECEIVING_TASKS_URI,
+                new AbstractComponent.AbstractTask() {
+                    @Override
+                    public void run() {
+                        ((ClientSubscriptionPlugin) ReceivingInboundPort.this
+                                .getOwnerPlugin(ClientSubscriptionPlugin.PLUGIN_URI))
+                                .receive(channel, message);
+                    }
                 });
 
     }
 
     @Override
     public void receive(String channel, MessageI[] messages) throws Exception {
-        this.getOwner().handleRequest(
-                c -> {
-                    ((ClientI) c).receiveMultiple(channel, messages);
-                    return null;
+        this.getOwner().runTask(
+                ClientSubscriptionPlugin.RECEIVING_TASKS_URI,
+                new AbstractComponent.AbstractTask() {
+                    @Override
+                    public void run() {
+                        ((ClientSubscriptionPlugin) ReceivingInboundPort.this
+                                .getOwnerPlugin(ClientSubscriptionPlugin.PLUGIN_URI))
+                                .receive(channel, messages);
+                    }
                 });
 
     }
