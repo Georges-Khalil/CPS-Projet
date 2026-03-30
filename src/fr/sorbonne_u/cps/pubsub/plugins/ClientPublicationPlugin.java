@@ -10,11 +10,13 @@ import fr.sorbonne_u.cps.pubsub.connectors.PrivilegedClientConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnauthorisedClientException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownChannelException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownClientException;
+import fr.sorbonne_u.cps.pubsub.interfaces.AbnormalTerminationNotificationCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PublishingCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI.RegistrationClass;
 import fr.sorbonne_u.cps.pubsub.plugins.interfaces.ClientPublicationI;
+import fr.sorbonne_u.cps.pubsub.ports.AbnormalTerminationNotificationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.PublishingOutboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientOutboundPort;
 
@@ -32,7 +34,7 @@ import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientOutboundPort;
  */
 public class ClientPublicationPlugin
 extends		AbstractPlugin
-implements	ClientPublicationI
+implements	ClientPublicationI, AbnormalTerminationNotificationCI
 {
 	private static final long serialVersionUID = 1L;
 
@@ -50,6 +52,9 @@ implements	ClientPublicationI
 
 	/** Reference to the registration plugin on the same component. */
 	protected ClientRegistrationPlugin registrationPlugin;
+
+	/** Inbound port for receiving abnormal termination notifications. */
+	protected AbnormalTerminationNotificationInboundPort notificationInboundPort;
 
 	// -------------------------------------------------------------------------
 	// Constructors
@@ -74,6 +79,10 @@ implements	ClientPublicationI
 	@Override
 	public void installOn(ComponentI owner) throws Exception {
 		super.installOn(owner);
+
+		this.addOfferedInterface(AbnormalTerminationNotificationCI.class);
+		this.notificationInboundPort = new AbnormalTerminationNotificationInboundPort(this.getOwner());
+		this.notificationInboundPort.publishPort();
 
 		// Create the appropriate outbound port depending on service class
 		if (this.registrationClass == RegistrationClass.FREE) {
@@ -123,6 +132,9 @@ implements	ClientPublicationI
 
 	@Override
 	public void finalise() throws Exception {
+		if (this.notificationInboundPort.isPublished()) {
+			this.notificationInboundPort.unpublishPort();
+		}
 		if (this.connected && this.publishingOutboundPort.connected()) {
 			this.getOwner().doPortDisconnection(
 					this.publishingOutboundPort.getPortURI());
@@ -133,6 +145,7 @@ implements	ClientPublicationI
 
 	@Override
 	public void uninstall() throws Exception {
+		this.notificationInboundPort.destroyPort();
 		this.publishingOutboundPort.unpublishPort();
 		this.publishingOutboundPort.destroyPort();
 		if (this.registrationClass == RegistrationClass.FREE) {
@@ -245,7 +258,11 @@ implements	ClientPublicationI
     public void asyncPublishAndNotify(String channel, MessageI message) {
         try {
             String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
-            this.publishingOutboundPort.asyncPublishAndNotify(receptionPortURI, channel, message, receptionPortURI);
+            this.publishingOutboundPort.asyncPublishAndNotify(
+                    receptionPortURI, 
+                    channel, 
+                    message, 
+                    this.notificationInboundPort.getPortURI());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -255,9 +272,23 @@ implements	ClientPublicationI
     public void asyncPublishAndNotify(String channel, ArrayList<MessageI> messages) {
         try {
             String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
-            this.publishingOutboundPort.asyncPublishAndNotify(receptionPortURI, channel, messages, receptionPortURI); // TODO Reception port URI ??
+            this.publishingOutboundPort.asyncPublishAndNotify(
+                    receptionPortURI, 
+                    channel, 
+                    messages, 
+                    this.notificationInboundPort.getPortURI());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void notifyAbnormalTermination(String channel, MessageI message, Throwable cause) throws Exception {
+        this.getOwner().traceMessage("Abnormal termination on channel " + channel + ": " + cause.getMessage() + "\n");
+    }
+
+    @Override
+    public void notifyAbnormalTermination(String channel, MessageI[] messages, Throwable cause) throws Exception {
+        this.getOwner().traceMessage("Abnormal termination on channel " + channel + " (multiple messages): " + cause.getMessage() + "\n");
     }
 }

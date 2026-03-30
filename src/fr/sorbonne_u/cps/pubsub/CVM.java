@@ -4,6 +4,7 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.cps.pubsub.composants.Broker;
 import fr.sorbonne_u.cps.pubsub.scenario.AsyncAuditScenario;
+import fr.sorbonne_u.cps.pubsub.scenario.AsyncErrorScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.ChannelManagementScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.ComplexInteractionScenario;

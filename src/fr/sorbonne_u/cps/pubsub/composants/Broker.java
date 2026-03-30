@@ -1,12 +1,15 @@
 package fr.sorbonne_u.cps.pubsub.composants;
 
 import fr.sorbonne_u.components.AbstractComponent;
+import fr.sorbonne_u.components.ComponentI.FComponentTask;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.pubsub.exceptions.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
+import fr.sorbonne_u.cps.pubsub.connectors.AbnormalTerminationNotificationConnector;
 import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
+import fr.sorbonne_u.cps.pubsub.ports.AbnormalTerminationNotificationOutboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
@@ -72,6 +75,10 @@ public class Broker extends AbstractComponent {
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
 
     private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
+    private static final String RECEPTION_POOL_URI = "reception-pool";
+    private static final String PROPAGATION_POOL_URI = "propagation-pool";
+    private static final String DELIVERY_POOL_URI = "delivery-pool";
+
     private static final int RECEPTION_POOL_SIZE = 2;
     private static final int PROPAGATION_POOL_SIZE = 2;
     private static final int DELIVERY_POOL_SIZE = 4;
@@ -83,10 +90,8 @@ public class Broker extends AbstractComponent {
     protected final HashMap<String, Client> clients;
     protected final ReadWriteLock channels_lock, clients_lock;
 
-    protected ExecutorService reception_pool, propagation_pool, delivery_pool;
-
     protected Broker() throws Exception {
-        super(1, 1);
+        super(1, 0);
         this.bpip = new PrivilegedClientInboundPort(BROKER_PUBLISH_URI, this);
         this.brip = new RegistrationInboundPort(BROKER_REGISTRATION_URI, this);
         this.bpip.publishPort();
@@ -97,9 +102,10 @@ public class Broker extends AbstractComponent {
         this.channels_lock = new ReentrantReadWriteLock();
         this.clients_lock = new ReentrantReadWriteLock();
 
-        this.reception_pool = Executors.newFixedThreadPool(RECEPTION_POOL_SIZE);
-        this.propagation_pool = Executors.newFixedThreadPool(PROPAGATION_POOL_SIZE);
-        this.delivery_pool = Executors.newFixedThreadPool(DELIVERY_POOL_SIZE);
+        // Pool instantiation using what is available in BCM4Java (also shuts down automatically)
+        this.createNewExecutorService(RECEPTION_POOL_URI, RECEPTION_POOL_SIZE, false);
+        this.createNewExecutorService(PROPAGATION_POOL_URI, PROPAGATION_POOL_SIZE, false);
+        this.createNewExecutorService(DELIVERY_POOL_URI, DELIVERY_POOL_SIZE, false);
 
         // Default channels
         this.channels.put(WIND_CHANNEL, new Channel(null, ""));
@@ -115,13 +121,6 @@ public class Broker extends AbstractComponent {
     @Override
     public synchronized void shutdown() throws ComponentShutdownException {
         try {
-            this.reception_pool.shutdown();
-            this.propagation_pool.shutdown();
-            this.delivery_pool.shutdown();
-            this.reception_pool.awaitTermination(1, TimeUnit.SECONDS);
-            this.propagation_pool.awaitTermination(1, TimeUnit.SECONDS);
-            this.delivery_pool.awaitTermination(1, TimeUnit.SECONDS);
-
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
             for (Client client : this.clients.values())
@@ -152,12 +151,49 @@ public class Broker extends AbstractComponent {
     }
 
     protected void submitPublication(String channel, List<MessageI> messages) {
-        this.reception_pool.submit(() -> this.acceptPublication(channel, messages));
+        this.runTask(RECEPTION_POOL_URI, (FComponentTask) (owner) -> this.acceptPublication(channel, messages));
+    }
+
+    protected void submitPublication(String channel, List<MessageI> messages, String notificationInboundPortURI) {
+        this.runTask(RECEPTION_POOL_URI, (FComponentTask) (owner) -> {
+            try {
+                this.acceptPublication(channel, messages);
+            } catch (Exception e) {
+                this.traceMessage("Publication error: " + e.getMessage() + "\n");
+                if (notificationInboundPortURI != null) {
+                    this.notifyError(channel, messages, notificationInboundPortURI, e);
+                }
+            }
+        });
+    }
+
+    protected void notifyError(String channel, List<MessageI> messages, String notificationInboundPortURI, Throwable cause) {
+        this.runTask(PROPAGATION_POOL_URI, (FComponentTask) (owner) -> {
+            try {
+                AbnormalTerminationNotificationOutboundPort port = new AbnormalTerminationNotificationOutboundPort(this);
+                port.publishPort();
+                this.doPortConnection(
+                        port.getPortURI(),
+                        notificationInboundPortURI,
+                        AbnormalTerminationNotificationConnector.class.getCanonicalName()
+                );
+                if (messages.size() == 1) {
+                    port.notifyAbnormalTermination(channel, messages.get(0), cause);
+                } else {
+                    port.notifyAbnormalTermination(channel, messages.toArray(new MessageI[0]), cause);
+                }
+                this.doPortDisconnection(port.getPortURI());
+                port.unpublishPort();
+                port.destroyPort();
+            } catch (Exception e) {
+                this.traceMessage("Failed to notify client: " + e.getMessage() + "\n");
+            }
+        });
     }
 
     protected void acceptPublication(String channel, List<MessageI> messages) {
         for (MessageI message : messages) {
-            this.propagation_pool.submit(() -> {
+            this.runTask(PROPAGATION_POOL_URI, (FComponentTask) (owner) -> {
                 try {
                     this.propagateMessage(channel, message);
                 } catch (Exception e) {
@@ -182,7 +218,7 @@ public class Broker extends AbstractComponent {
 
         for (Subscription entry : subscribers)
             if (entry.filter.match(message))
-                this.delivery_pool.submit(() -> this.deliverMessage(channel, message, entry.client));
+                this.runTask(DELIVERY_POOL_URI, (FComponentTask) (owner) -> this.deliverMessage(channel, message, entry.client));
 
     }
 
@@ -477,23 +513,26 @@ public class Broker extends AbstractComponent {
     }
 
 
-    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) {
-        try {
-            if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
-                throw new IllegalArgumentException();
-            this.publish(receptionPortURI, channel, message);
-        } catch (Exception e) {
-            this.traceMessage("Async publication error: " + e.getMessage() + "\n");
-        }
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, MessageI message, String notificationInboundPortURI) throws Exception {
+        if (message == null)
+            throw new IllegalArgumentException();
+        if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
+            throw new IllegalArgumentException();
+
+        this.validatePublicationRequest(receptionPortURI, channel);
+        this.submitPublication(channel, Collections.singletonList(message), notificationInboundPortURI);
     }
 
-    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) {
-        try {
-            if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
+    public void asyncPublishAndNotify(String receptionPortURI, String channel, ArrayList<MessageI> messages, String notificationInboundPortURI) throws Exception {
+        if (messages == null || messages.isEmpty())
+            throw new IllegalArgumentException();
+        for (MessageI message : messages)
+            if (message == null)
                 throw new IllegalArgumentException();
-            this.publish(receptionPortURI, channel, messages);
-        } catch (Exception e) {
-            this.traceMessage("Async publication error: " + e.getMessage() + "\n");
-        }
+        if (notificationInboundPortURI == null || notificationInboundPortURI.isEmpty())
+            throw new IllegalArgumentException();
+
+        this.validatePublicationRequest(receptionPortURI, channel);
+        this.submitPublication(channel, new ArrayList<>(messages), notificationInboundPortURI);
     }
 }
