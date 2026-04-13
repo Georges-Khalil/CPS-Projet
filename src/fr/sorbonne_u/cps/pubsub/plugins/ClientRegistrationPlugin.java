@@ -2,7 +2,7 @@ package fr.sorbonne_u.cps.pubsub.plugins;
 
 import fr.sorbonne_u.components.AbstractPlugin;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.AlreadyRegisteredException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownClientException;

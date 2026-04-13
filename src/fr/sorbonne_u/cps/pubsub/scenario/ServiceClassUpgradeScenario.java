@@ -5,7 +5,7 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
-import fr.sorbonne_u.cps.pubsub.composants.Bureau;
+import fr.sorbonne_u.cps.pubsub.components.Bureau;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
 import java.time.Instant;

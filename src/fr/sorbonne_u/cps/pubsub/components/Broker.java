@@ -1,7 +1,6 @@
-package fr.sorbonne_u.cps.pubsub.composants;
+package fr.sorbonne_u.cps.pubsub.components;
 
 import fr.sorbonne_u.components.AbstractComponent;
-import fr.sorbonne_u.components.ComponentI.FComponentTask;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -16,7 +15,6 @@ import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
 
 import java.security.acl.NotOwnerException;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

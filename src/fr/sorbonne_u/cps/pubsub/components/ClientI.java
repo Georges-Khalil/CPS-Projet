@@ -1,4 +1,4 @@
-package fr.sorbonne_u.cps.pubsub.composants;
+package fr.sorbonne_u.cps.pubsub.components;
 
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 
