@@ -2,6 +2,7 @@ package fr.sorbonne_u.cps.pubsub.filters;
 
 import java.io.Serializable;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI.ValueFilterI;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -43,7 +44,7 @@ public class ComparableValueFilter implements ValueFilterI {
               case LE: return comparison <= 0;
               case GE: return comparison >= 0;
               case GT: return comparison > 0;
-              default: return false;
+              default: throw new NotImplementedException();
         }
     }
 }
