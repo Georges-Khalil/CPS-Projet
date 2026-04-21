@@ -73,7 +73,7 @@ public class Message implements MessageI {
             throw new IllegalArgumentException();
         if (!propertyExists(name))
             throw new UnknownPropertyException("Property not found: " + name);
-        return this.properties.get(name);
+        return this.properties.get(name).getValue();
     }
     
     @Override
