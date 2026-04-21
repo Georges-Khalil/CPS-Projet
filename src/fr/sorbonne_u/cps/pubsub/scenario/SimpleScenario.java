@@ -13,6 +13,7 @@ import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
+import fr.sorbonne_u.cps.pubsub.meteo.messages.WindMessage;
 
 import java.time.Instant;
 
@@ -39,9 +40,7 @@ public class SimpleScenario extends AbstractScenario {
                     station.getRegistrationPlugin().getPublishingPortURI());
             station.traceMessage("Station1 : Registered\n");
             // Publish a test message with WindData as payload
-            Message msg = new Message(new WindData(station.getPosition(), 10.0, 5.0));
-            msg.putProperty("Type", "wind");
-            msg.putProperty("ID", station.getUid());
+            Message msg = new WindMessage(station, 10.0, 5.0);
             station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
             station.traceMessage("Station1 : Publish a message on wind_channel - " + msg.getPayload() + "\n");
         } catch (Exception e) {
