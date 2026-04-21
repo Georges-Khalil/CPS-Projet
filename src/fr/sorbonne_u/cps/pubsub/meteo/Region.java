@@ -8,28 +8,26 @@ import fr.sorbonne_u.cps.meteo.interfaces.RegionI;
  */
 public class Region implements RegionI {
 
-  private final int x, y, width, height;
+    private final int x, y, width, height;
 
-  public Region(int x, int y, int width, int height) {
-    if (width <= 0 || height <= 0)
-      throw new IllegalArgumentException();
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-  }
+    public Region(int x, int y, int width, int height) {
+        if (width <= 0 || height <= 0)
+            throw new IllegalArgumentException();
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
 
-  @Override
-  public boolean in(PositionI p) {
-    if (!(p instanceof Position))
-      throw new IllegalArgumentException();
-    Position pos = ((Position) p);
-    return pos.x >= this.x && pos.x < this.x + this.width &&
-           pos.y >= this.y && pos.y < this.y + this.height;
-  }
+    @Override
+    public boolean in(PositionI p) {
+        if (!(p instanceof Position))
+            throw new IllegalArgumentException();
+        return ((Position) p).isIn(this.x, this.y, this.width, this.height);
+    }
 
-  @Override
-  public String toString() {
-    return "Region{" + "x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + '}';
-  }
+    @Override
+    public String toString() {
+        return "Region{" + "x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + '}';
+    }
 }
