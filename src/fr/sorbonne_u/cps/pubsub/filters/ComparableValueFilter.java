@@ -35,8 +35,10 @@ public class ComparableValueFilter implements ValueFilterI {
         if (value == null)
             throw new IllegalArgumentException();
 
-        if (this.operator == Operator.EQ || this.operator == Operator.NE)
-            return this.referenceValue.equals(value) ^ (this.operator == Operator.NE);
+        if (this.operator == Operator.EQ)
+            return this.referenceValue.equals(value);
+        if (this.operator == Operator.NE)
+            return !this.referenceValue.equals(value);
 
         int comparison = ((Comparable<Object>) value).compareTo(this.referenceValue);
         switch (operator) {
