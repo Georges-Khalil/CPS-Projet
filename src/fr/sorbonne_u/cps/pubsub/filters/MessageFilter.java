@@ -1,8 +1,10 @@
 package fr.sorbonne_u.cps.pubsub.filters;
 
+import fr.sorbonne_u.cps.pubsub.exceptions.UnknownPropertyException;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI.PropertyI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
+import fr.sorbonne_u.cps.pubsub.message.Property;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -29,47 +31,43 @@ public class MessageFilter implements MessageFilterI {
         this.propertiesFilters = propertiesFilters != null ? propertiesFilters : new PropertiesFilterI[0];
         this.timeFilter = timeFilter != null ? timeFilter : TimeFilter.acceptAny();
     }
-    
+
     @Override
     public PropertyFilterI[] getPropertyFilters() {
         return this.propertyFilters;
     }
-    
+
     @Override
     public PropertiesFilterI[] getPropertiesFilters() {
         return this.propertiesFilters;
     }
-    
+
     @Override
     public TimeFilterI getTimeFilter() {
         return this.timeFilter;
     }
-    
+
     @Override
     public boolean match(MessageI message) {
         if (message == null)
             throw new IllegalArgumentException();
-        
+
         if (!this.timeFilter.match(message.getTimeStamp()))
             return false;
-        
-        PropertyI[] properties = message.getProperties();
-        
-        for (PropertyFilterI propertyFilter : this.propertyFilters) {
-            boolean not_found = true;
-            for (PropertyI property : properties)
-                if (propertyFilter.match(property)) {
-                    not_found = false;
-                    break;
-                }
-            if (not_found)
-                return false;
+
+        try {
+            for (PropertyFilterI propertyFilter : this.propertyFilters)
+                if (!propertyFilter.match(new Property(propertyFilter.getName(), message.getPropertyValue(propertyFilter.getName()))))
+                    return false;
+        } catch (UnknownPropertyException e) {
+            return false;
         }
-        
+
+        PropertyI[] properties = message.getProperties();
         for (PropertiesFilterI propertiesFilter : this.propertiesFilters)
             if (!propertiesFilter.match(properties))
                 return false;
-        
+
         return true;
     }
 }
