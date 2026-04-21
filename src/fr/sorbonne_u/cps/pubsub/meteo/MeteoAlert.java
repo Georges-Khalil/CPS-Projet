@@ -12,10 +12,6 @@ import java.util.Arrays;
  */
 public class MeteoAlert implements MeteoAlertI {
 
-  public enum Level implements LevelI {
-    GREEN, YELLOW, ORANGE, RED, SCARLET
-  }
-
   private final AlertTypeI type;
   private final LevelI level;
   private final RegionI[] regions;
