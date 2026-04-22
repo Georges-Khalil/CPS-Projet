@@ -45,10 +45,10 @@ implements	ClientRegistrationI
 	 *
 	 * @param receptionPortURI	URI of the owner's ReceivingInboundPort.
 	 */
-	public ClientRegistrationPlugin(String receptionPortURI) {
+	public ClientRegistrationPlugin(String receptionPortURI, boolean isSenderOnly) {
 		super();
 		this.setPluginURI(PLUGIN_URI);
-		this.receptionPortURI = receptionPortURI;
+		this.receptionPortURI = (isSenderOnly ? "#" : "") + receptionPortURI;
 	}
 
 	// -------------------------------------------------------------------------

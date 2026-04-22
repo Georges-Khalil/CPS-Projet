@@ -82,7 +82,7 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.installPlugin(this.subscriptionPlugin);
 
         // Create and install the registration plugin
-        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, false);
         this.installPlugin(this.registrationPlugin);
 
         // Create and install the publication plugin (PREMIUM class -> PrivilegedClientOutboundPort)

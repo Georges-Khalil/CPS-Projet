@@ -3,6 +3,7 @@ package fr.sorbonne_u.cps.pubsub.components;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
+import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.cps.pubsub.exceptions.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
@@ -31,7 +32,7 @@ public class Broker extends AbstractComponent {
 
     static class Client {
         final String receiving_uri;
-        final ReceivingOutboundPort port;
+        final ReceivingOutboundPort port; // Nullable : please check before use (create methods)
         final List<String> subscriptions;
         volatile RegistrationCI.RegistrationClassI rc;
 
@@ -275,13 +276,16 @@ public class Broker extends AbstractComponent {
         if (registered(receptionPortURI))
             throw new AlreadyRegisteredException();
 
-        ReceivingOutboundPort outPort = new ReceivingOutboundPort(this);
-        outPort.publishPort();
-        this.doPortConnection(
-                outPort.getPortURI(),
-                receptionPortURI,
-                ReceivingConnector.class.getCanonicalName()
-        );
+        ReceivingOutboundPort outPort = null;
+        if (!receptionPortURI.startsWith("#")) {
+            outPort = new ReceivingOutboundPort(this);
+            outPort.publishPort();
+            this.doPortConnection(
+                    outPort.getPortURI(),
+                    receptionPortURI,
+                    ReceivingConnector.class.getCanonicalName()
+            );
+        }
 
         this.clients_lock.writeLock().lock();
         try {

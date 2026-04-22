@@ -54,7 +54,7 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         this.installPlugin(this.subscriptionPlugin);
 
         // Create and install the registration plugin (connects to broker)
-        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, false);
         this.installPlugin(this.registrationPlugin);
 
         // Wire plugin references
