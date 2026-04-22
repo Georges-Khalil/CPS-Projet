@@ -406,7 +406,7 @@ public class Broker extends AbstractComponent {
         }
     }
 
-    public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
+    public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception { // TODO : R2.6
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
         if (channelExist(channel))
@@ -438,7 +438,7 @@ public class Broker extends AbstractComponent {
     public boolean channelQuotaReached(String receptionPortURI) throws Exception {
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        return false; // TODO
+        return false; // TODO : R2.9
     }
 
     public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
