@@ -55,12 +55,12 @@ public class Broker extends AbstractComponent {
 
     static class Channel {
         final String owner_uri;
-        final List<Subscription> subscribers;
+        final Map<String, Subscription> subscribers;
         private volatile String regex;
 
         Channel(String owner_uri, String regex) {
             this.owner_uri = owner_uri;
-            this.subscribers = new ArrayList<>(); // TODO: better list ?
+            this.subscribers = new HashMap<>();
             this.regex = regex;
         }
 
@@ -206,14 +206,14 @@ public class Broker extends AbstractComponent {
     }
 
     protected void propagateMessage(String channel, MessageI message) throws UnknownChannelException {
-        List<Subscription> subscribers;
+        Collection<Subscription> subscribers;
 
         this.channels_lock.readLock().lock();
         try {
             Channel chan = channels.get(channel);
             if (chan == null)
                 throw new UnknownChannelException();
-            subscribers = new ArrayList<>(chan.subscribers);
+            subscribers = chan.subscribers.values();
         } finally {
             this.channels_lock.readLock().unlock();
         }
@@ -315,7 +315,7 @@ public class Broker extends AbstractComponent {
         try {
             Client client = this.clients.remove(receptionPortURI);
             for (String channel : client.subscriptions)
-                this.channels.get(channel).subscribers.removeIf(e -> e.client == client);
+                this.channels.get(channel).subscribers.remove(receptionPortURI);
 
             this.doPortDisconnection(client.port.getPortURI());
             client.port.unpublishPort();
@@ -362,7 +362,7 @@ public class Broker extends AbstractComponent {
         this.channels_lock.writeLock().lock();
         this.clients_lock.readLock().lock();
         try {
-            this.channels.get(channel).subscribers.add(new Subscription(this.clients.get(receptionPortURI), filter));
+            this.channels.get(channel).subscribers.put(receptionPortURI, new Subscription(this.clients.get(receptionPortURI), filter));
             this.clients.get(receptionPortURI).subscriptions.add(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
@@ -378,7 +378,7 @@ public class Broker extends AbstractComponent {
         this.clients_lock.readLock().lock();
         try {
             Client client = this.clients.get(receptionPortURI);
-            this.channels.get(channel).subscribers.removeIf(e -> e.client == client);
+            this.channels.get(channel).subscribers.remove(receptionPortURI);
             client.subscriptions.remove(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
@@ -396,11 +396,10 @@ public class Broker extends AbstractComponent {
         this.clients_lock.readLock().lock();
         try {
             Client client = this.clients.get(receptionPortURI);
-            for (Subscription sub : this.channels.get(channel).subscribers)
-                if (sub.client == client) {
-                    sub.filter = filter;
-                    return;
-                }
+            Subscription sub = this.channels.get(channel).subscribers.get(receptionPortURI);
+            if (sub == null)
+                throw new RuntimeException("Client subscribed but Subscription not found");
+            sub.filter = filter;
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
@@ -481,7 +480,7 @@ public class Broker extends AbstractComponent {
         this.channels_lock.writeLock().lock();
         try {
             Channel chan = this.channels.remove(channel);
-            for (Subscription sub : chan.subscribers)
+            for (Subscription sub : chan.subscribers.values())
                 sub.client.subscriptions.remove(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
