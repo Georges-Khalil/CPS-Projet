@@ -206,9 +206,7 @@ implements	ClientPublicationI, AbnormalTerminationNotificationCI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			return regPlugin.getRegistrationOutboundPort()
 					.channelAuthorised(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -221,11 +219,7 @@ implements	ClientPublicationI, AbnormalTerminationNotificationCI
 		try {
 			String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
 			this.publishingOutboundPort.publish(receptionPortURI, channel, message);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -238,11 +232,7 @@ implements	ClientPublicationI, AbnormalTerminationNotificationCI
 		try {
 			String receptionPortURI = this.getRegistrationPlugin().getReceptionPortURI();
 			this.publishingOutboundPort.publish(receptionPortURI, channel, messages);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

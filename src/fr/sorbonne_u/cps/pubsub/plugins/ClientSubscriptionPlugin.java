@@ -185,9 +185,7 @@ implements	ClientSubscriptionI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			return regPlugin.getRegistrationOutboundPort()
 					.channelAuthorised(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -201,9 +199,7 @@ implements	ClientSubscriptionI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			return regPlugin.getRegistrationOutboundPort()
 					.subscribed(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -217,11 +213,7 @@ implements	ClientSubscriptionI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			regPlugin.getRegistrationOutboundPort()
 					.subscribe(regPlugin.getReceptionPortURI(), channel, filter);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -236,13 +228,7 @@ implements	ClientSubscriptionI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			regPlugin.getRegistrationOutboundPort()
 					.unsubscribe(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
-			throw e;
-		} catch (NotSubscribedChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException | NotSubscribedChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -257,13 +243,7 @@ implements	ClientSubscriptionI
 			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
 			regPlugin.getRegistrationOutboundPort()
 					.modifyFilter(regPlugin.getReceptionPortURI(), channel, filter);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
-			throw e;
-		} catch (NotSubscribedChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException | NotSubscribedChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

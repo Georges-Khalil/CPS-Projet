@@ -165,9 +165,7 @@ implements	ClientRegistrationI
 		try {
 			this.publishingPortURI = this.registrationOutboundPort.modifyServiceClass(
 					this.receptionPortURI, rc);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (AlreadyRegisteredException e) {
+		} catch (UnknownClientException | AlreadyRegisteredException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

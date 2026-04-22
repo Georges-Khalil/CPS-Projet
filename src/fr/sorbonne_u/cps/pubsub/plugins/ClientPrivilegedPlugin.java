@@ -116,9 +116,7 @@ implements	PrivilegedClientI
 		try {
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			return this.getPrivilegedPort().hasCreatedChannel(uri, channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
+		} catch (UnknownClientException | UnknownChannelException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -144,11 +142,7 @@ implements	PrivilegedClientI
 		try {
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			this.getPrivilegedPort().createChannel(uri, channel, autorisedUsers);
-		} catch (UnknownClientException e) {
-            throw e;
-		} catch (AlreadyExistingChannelException e) {
-            throw e;
-		} catch (ChannelQuotaExceededException e) {
+		} catch (UnknownClientException | AlreadyExistingChannelException | ChannelQuotaExceededException e) {
             throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -177,11 +171,7 @@ implements	PrivilegedClientI
 		try {
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			this.getPrivilegedPort().modifyAuthorisedUsers(uri, channel, autorisedUsers);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -195,11 +185,7 @@ implements	PrivilegedClientI
 		try {
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			this.getPrivilegedPort().destroyChannel(uri, channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -213,11 +199,7 @@ implements	PrivilegedClientI
 		try {
 			String uri = this.getRegistrationPlugin().getReceptionPortURI();
 			this.getPrivilegedPort().destroyChannelNow(uri, channel);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (UnauthorisedClientException e) {
+		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
