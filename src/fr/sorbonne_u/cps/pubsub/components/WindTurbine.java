@@ -72,24 +72,6 @@ public class WindTurbine extends AbstractComponent implements ClientI {
     }
 
     @Override
-    public synchronized void finalise() throws Exception {
-        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        super.finalise();
-    }
-
-    @Override
-    public synchronized void shutdown() throws ComponentShutdownException {
-        try {
-            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        } catch (Exception e) {
-            throw new ComponentShutdownException(e);
-        }
-        super.shutdown();
-    }
-
-    @Override
     public void receiveOne(String channel, MessageI message) {
         this.traceMessage("Message received on '" + channel +
                 "' | payload=" + message.getPayload() + " | timestamp=" + message.getTimeStamp() + "\n");

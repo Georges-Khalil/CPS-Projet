@@ -111,28 +111,6 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.executeTestScenario(this.testScenario);
     }
 
-    @Override
-    public synchronized void finalise() throws Exception {
-        this.finalisePlugin(ClientPrivilegedPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientPublicationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        super.finalise();
-    }
-
-    @Override
-    public synchronized void shutdown() throws ComponentShutdownException {
-        try {
-            this.uninstallPlugin(ClientPrivilegedPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientPublicationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        } catch (Exception e) {
-            throw new ComponentShutdownException(e);
-        }
-        super.shutdown();
-    }
-
     protected void receiveFromStationsInfo(MessageI message) throws Exception {
         this.stations.put((Integer) message.getPropertyValue("ID"), (RegionI) message.getPayload());
     }
