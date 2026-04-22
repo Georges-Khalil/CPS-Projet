@@ -56,16 +56,20 @@ public class Broker extends AbstractComponent {
     static class Channel {
         final String owner_uri;
         final List<Subscription> subscribers;
-        volatile List<String> whitelist;
+        private volatile String regex;
 
-        Channel(String owner_uri, String whitelist) {
+        Channel(String owner_uri, String regex) {
             this.owner_uri = owner_uri;
             this.subscribers = new ArrayList<>(); // TODO: better list ?
-            this.setWhiteList(whitelist);
+            this.regex = regex;
         }
 
-        public void setWhiteList(String whitelist) {
-            this.whitelist = Arrays.asList(whitelist.split("\t"));
+        public void setRegex(String regex) {
+            this.regex = regex;
+        }
+
+        public boolean isAuthorized(String uri) {
+            return regex.isEmpty() || uri.matches(this.regex);
         }
     }
 
@@ -352,6 +356,8 @@ public class Broker extends AbstractComponent {
             throw new IllegalArgumentException();
         if (subscribed(receptionPortURI, channel))
             throw new RuntimeException("Already Subscribed");
+        if (!this.channels.get(channel).isAuthorized(receptionPortURI))
+            throw new UnauthorisedClientException();
 
         this.channels_lock.writeLock().lock();
         this.clients_lock.readLock().lock();
@@ -380,7 +386,7 @@ public class Broker extends AbstractComponent {
         }
     }
 
-    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
         if (filter == null)
             throw new IllegalArgumentException();
         if (!subscribed(receptionPortURI, channel))
@@ -393,13 +399,12 @@ public class Broker extends AbstractComponent {
             for (Subscription sub : this.channels.get(channel).subscribers)
                 if (sub.client == client) {
                     sub.filter = filter;
-                    return true;
+                    return;
                 }
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
         }
-        return false;
     }
 
     public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
@@ -437,54 +442,27 @@ public class Broker extends AbstractComponent {
         return false; // TODO
     }
 
-    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
+        if (regex == null)
+            throw new IllegalArgumentException();
         if (!channelAuthorised(receptionPortURI, channel))
             throw new UnauthorisedClientException();
         this.channels_lock.writeLock().lock();
         try {
-            this.channels.put(channel, new Channel(receptionPortURI, authorisedUsers));
+            this.channels.put(channel, new Channel(receptionPortURI, regex));
         } finally {
             this.channels_lock.writeLock().unlock();
         }
     }
 
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        if (!registered(uri))
-            throw new UnknownClientException();
-        if (!channelExist(channel))
-            throw new UnknownChannelException();
-        this.channels_lock.readLock().lock();
-        try {
-            return channels.get(channel).whitelist.contains(uri);
-        } finally {
-            this.channels_lock.readLock().unlock();
-        }
-    }
-
-    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
-        if (authorisedUsers == null || authorisedUsers.isEmpty())
+    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String regex) throws Exception {
+        if (regex == null)
             throw new IllegalArgumentException();
         if (!hasCreatedChannel(receptionPortURI, channel))
             throw new NotOwnerException();
         this.channels_lock.writeLock().lock();
         try {
-            this.channels.get(channel).setWhiteList(authorisedUsers);
-        } finally {
-            this.channels_lock.writeLock().unlock();
-        }
-    }
-
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String users) throws Exception {
-        if (users == null || users.isEmpty())
-            throw new IllegalArgumentException();
-        if (!hasCreatedChannel(receptionPortURI, channel))
-            throw new NotOwnerException();
-
-        this.channels_lock.writeLock().lock();
-        try {
-            Channel chan = this.channels.get(channel);
-            for (String user : users.split("\t"))
-                chan.whitelist.remove(user); // to check
+            this.channels.get(channel).setRegex(regex);
         } finally {
             this.channels_lock.writeLock().unlock();
         }

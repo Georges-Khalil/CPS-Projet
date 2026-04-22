@@ -163,15 +163,16 @@ implements	PrivilegedClientI
 	@Override
 	public boolean isAuthorisedUser(String channel, String uri)
 	throws UnknownClientException, UnknownChannelException {
-		try {
-			return this.getPrivilegedPort().isAuthorisedUser(channel, uri);
-		} catch (UnknownClientException e) {
-			throw e;
-		} catch (UnknownChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        return true; // TODO : Why is that method present in PrivilegedClientI and not PrivilegedClientCI ?
+//		try {
+//			return this.getPrivilegedPort().isAuthorisedUser(channel, uri);
+//		} catch (UnknownClientException e) {
+//			throw e;
+//		} catch (UnknownChannelException e) {
+//			throw e;
+//		} catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
 	}
 
 	@Override

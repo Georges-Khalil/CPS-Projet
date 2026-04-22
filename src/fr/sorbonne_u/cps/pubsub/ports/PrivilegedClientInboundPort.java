@@ -32,34 +32,19 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
     }
 
     @Override
-    public void createChannel(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).createChannel(receptionPortURI, channel, authorisedUsers);
+                    ((Broker) c).createChannel(receptionPortURI, channel, regex);
                     return null;
                 });
     }
 
     @Override
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return this.getOwner().handleRequest(
-                c -> ((Broker) c).isAuthorisedUser(channel, uri));
-    }
-
-    @Override
-    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
+    public void modifyAuthorisedUsers(String receptionPortURI, String channel, String regex) throws Exception {
         this.getOwner().handleRequest(
                 c -> {
-                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
-                    return null;
-                });
-    }
-
-    @Override
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-        this.getOwner().handleRequest(
-                c -> {
-                    ((Broker) c).removeAuthorisedUsers(receptionPortURI, channel, regularExpression);
+                    ((Broker) c).modifyAuthorisedUsers(receptionPortURI, channel, regex);
                     return null;
                 });
     }

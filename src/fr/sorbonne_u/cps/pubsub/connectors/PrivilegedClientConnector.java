@@ -37,19 +37,8 @@ public class PrivilegedClientConnector extends PublishingConnector implements Pr
     }
 
     @Override
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return ((PrivilegedClientCI) this.offering).isAuthorisedUser(channel, uri);
-    }
-
-    @Override
     public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
         ((PrivilegedClientCI) this.offering).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
-
-    }
-
-    @Override
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-        ((PrivilegedClientCI) this.offering).removeAuthorisedUsers(receptionPortURI, channel, regularExpression);
 
     }
 
