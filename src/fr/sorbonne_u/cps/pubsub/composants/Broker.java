@@ -211,12 +211,12 @@ public class Broker extends AbstractComponent {
             Channel chan = channels.get(channel);
             if (chan == null)
                 throw new UnknownChannelException();
-            subscribers = new ArrayList<>(chan.subscribers);
+            subscribers = new ArrayList<>(chan.subscribers);    // Todo: les copies ne sont pas maintenables sur de très grandes listes de clients
         } finally {
             this.channels_lock.readLock().unlock();
         }
 
-        for (Subscription entry : subscribers)
+        for (Subscription entry : subscribers)  // Todo: On devrait parcourir cette liste avec plusieurs messages pour envoyer des groupes de messages
             if (entry.filter.match(message))
                 this.runTask(DELIVERY_POOL_URI, (FComponentTask) (owner) -> this.deliverMessage(channel, message, entry.client));
 
