@@ -5,14 +5,13 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
-import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 
 import java.time.Instant;
 
@@ -33,7 +32,7 @@ public class UnregisterRedeployScenario extends AbstractScenario {
     static void setupTurbine(WindTurbine wt) {
         try {
             wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             wt.traceMessage("WindTurbine: Registered and subscribed\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
@@ -45,7 +44,7 @@ public class UnregisterRedeployScenario extends AbstractScenario {
                 station.getPublicationPlugin().connectToPublishingPort(station.getRegistrationPlugin().getPublishingPortURI());
             }
             Message msg = new Message("Data: " + label);
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station: Published '" + label + "'\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }

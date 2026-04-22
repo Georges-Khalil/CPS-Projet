@@ -1,4 +1,4 @@
-package fr.sorbonne_u.cps.pubsub.composants;
+package fr.sorbonne_u.cps.pubsub.components;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -18,7 +18,7 @@ import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
  *
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
-public class Station extends AbstractComponent implements ClientI {
+public class Station extends AbstractComponent {
 
     protected final PositionI position;
     protected final int uid;
@@ -47,9 +47,6 @@ public class Station extends AbstractComponent implements ClientI {
         return publicationPlugin;
     }
 
-    /** Plugin for subscription (needed for ReceivingInboundPort). */
-    protected ClientSubscriptionPlugin subscriptionPlugin;
-
     /**
      * Test scenario configuration for the Station component.
      */
@@ -63,12 +60,8 @@ public class Station extends AbstractComponent implements ClientI {
 
         this.receptionPortURI = URIGenerator.getNew(this);
 
-        // Create and install the subscription plugin (creates the ReceivingInboundPort)
-        this.subscriptionPlugin = new ClientSubscriptionPlugin(this.receptionPortURI);
-        this.installPlugin(this.subscriptionPlugin);
-
         // Create and install the registration plugin
-        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, true);
         this.installPlugin(this.registrationPlugin);
 
         // Create and install the publication plugin (FREE class)
@@ -76,7 +69,6 @@ public class Station extends AbstractComponent implements ClientI {
         this.installPlugin(this.publicationPlugin);
 
         // Wire plugin references
-        this.subscriptionPlugin.setRegistrationPlugin(this.registrationPlugin);
         this.publicationPlugin.setRegistrationPlugin(this.registrationPlugin);
     }
 
@@ -89,30 +81,4 @@ public class Station extends AbstractComponent implements ClientI {
         // make the component execute its actions in the test scenario
         this.executeTestScenario(this.testScenario);
     }
-
-    @Override
-    public synchronized void finalise() throws Exception {
-        this.finalisePlugin(ClientPublicationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        super.finalise();
-    }
-
-    @Override
-    public synchronized void shutdown() throws ComponentShutdownException {
-        try {
-            this.uninstallPlugin(ClientPublicationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        } catch (Exception e) {
-            throw new ComponentShutdownException(e);
-        }
-        super.shutdown();
-    }
-
-    @Override // Not a primary receiver
-    public void receiveOne(String channel, MessageI message) { }
-
-    @Override
-    public void receiveMultiple(String channel, MessageI[] messages) { }
 }

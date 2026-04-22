@@ -34,18 +34,8 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
     }
 
     @Override
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return ((PrivilegedClientCI) this.getConnector()).isAuthorisedUser(channel, uri);
-    }
-
-    @Override
     public void modifyAuthorisedUsers(String receptionPortURI, String channel, String authorisedUsers) throws Exception {
         ((PrivilegedClientCI) this.getConnector()).modifyAuthorisedUsers(receptionPortURI, channel, authorisedUsers);
-    }
-
-    @Override
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-        ((PrivilegedClientCI) this.getConnector()).removeAuthorisedUsers(receptionPortURI, channel, regularExpression);
     }
 
     @Override

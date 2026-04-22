@@ -5,10 +5,10 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Bureau;
-import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Bureau;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
@@ -107,7 +107,7 @@ public class LargeScaleScenario extends AbstractScenario {
                 try {
                     WindTurbine wt = (WindTurbine) owner;
                     wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
-                    wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+                    wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
                     wt.traceMessage("Turbine " + wt.getReflectionInboundPortURI() + " subscribed to wind\n");
                 } catch (Exception e) { throw new RuntimeException(e); }
             });
@@ -122,7 +122,7 @@ public class LargeScaleScenario extends AbstractScenario {
                     Message msg = new Message(new WindData(st.getPosition(), 20.0 + st.getUid() % 50, 0.0));
                     msg.putProperty("Type", "wind");
                     msg.putProperty("ID", st.getUid());
-                    st.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+                    st.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
                     st.traceMessage("Station " + st.getReflectionInboundPortURI() + " published wind data\n");
                 } catch (Exception e) { throw new RuntimeException(e); }
             });

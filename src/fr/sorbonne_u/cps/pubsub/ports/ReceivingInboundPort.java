@@ -3,7 +3,7 @@ package fr.sorbonne_u.cps.pubsub.ports;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
-import fr.sorbonne_u.cps.pubsub.composants.ClientI;
+import fr.sorbonne_u.cps.pubsub.components.ClientI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.ReceivingCI;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientSubscriptionPlugin;

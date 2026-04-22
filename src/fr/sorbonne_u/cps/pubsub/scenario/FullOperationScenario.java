@@ -6,10 +6,10 @@ import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Bureau;
-import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Bureau;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
@@ -19,7 +19,6 @@ import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 /**
  * Full operation test scenario that involves registration, subscription, and publication.
@@ -45,7 +44,7 @@ public class FullOperationScenario extends AbstractScenario {
             // Create the weather alerts channel
             bureau.getPrivilegedPlugin().createChannel(Bureau.WEATHER_ALERTS_CHANNEL, ".*");
             bureau.traceMessage("Bureau : Created weather_alert_channel\n");
-            bureau.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            bureau.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             bureau.traceMessage("Bureau : Subscribed to wind_channel\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -56,7 +55,7 @@ public class FullOperationScenario extends AbstractScenario {
         try {
             wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
             wt.traceMessage("WindTurbine : Registered\n");
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             wt.traceMessage("Subscribed to wind_channel\n");
 
             // Subscribe to weather alerts with a specific filter
@@ -88,7 +87,7 @@ public class FullOperationScenario extends AbstractScenario {
             Message msg = new Message(new WindData(station.getPosition(), 10.0, 5.0));
             msg.putProperty("Type", "wind");
             msg.putProperty("ID", station.getUid());
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station1 : Publish a message on wind_channel - " + msg.getPayload() + "\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -117,7 +116,7 @@ public class FullOperationScenario extends AbstractScenario {
             );
             msg.putProperty("Type", "wind");
             msg.putProperty("ID", station.getUid()); // fixed ID for simplicity in test
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Publish a message on wind_channel - " + msg.getPayload() + "\n");
         } catch (Exception e) {
             throw new RuntimeException(e);

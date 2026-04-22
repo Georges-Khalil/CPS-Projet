@@ -6,10 +6,10 @@ import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Bureau;
-import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Bureau;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
@@ -46,7 +46,7 @@ public class ComplexInteractionScenario extends AbstractScenario {
             bureau.getPublicationPlugin().connectToPublishingPort(
                     bureau.getRegistrationPlugin().getPublishingPortURI());
             bureau.getPrivilegedPlugin().createChannel(Bureau.WEATHER_ALERTS_CHANNEL, ".*");
-            bureau.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            bureau.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             bureau.traceMessage("Bureau: Setup complete (PREMIUM, created channel, subscribed to wind)\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -92,7 +92,7 @@ public class ComplexInteractionScenario extends AbstractScenario {
             Message msg = new Message(new WindData(station.getPosition(), windForce, windDirection));
             msg.putProperty("Type", "wind");
             msg.putProperty("ID", station.getUid());
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station: Published wind data (force=" + windForce + ")\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -159,7 +159,7 @@ public class ComplexInteractionScenario extends AbstractScenario {
                         new TestStep(this.clockURI, s3, start.plusSeconds(40), owner -> stationSetupStep((Station) owner)),
 
                         // 2. Subscriptions Phase
-                        new TestStep(this.clockURI, t1, start.plusSeconds(60), owner -> turbineSubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL, new MessageFilter(), "Subscribed to all wind data")),
+                        new TestStep(this.clockURI, t1, start.plusSeconds(60), owner -> turbineSubscribeStep((WindTurbine) owner, Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter(), "Subscribed to all wind data")),
                         new TestStep(this.clockURI, t2, start.plusSeconds(80), owner -> turbineSubscribeStep((WindTurbine) owner, Bureau.WEATHER_ALERTS_CHANNEL, filterHighWind, "Subscribed only to RED/SCARLET alerts")),
 
                         // 3. Normal Activity
@@ -171,7 +171,7 @@ public class ComplexInteractionScenario extends AbstractScenario {
                         new TestStep(this.clockURI, s1, start.plusSeconds(200), owner -> stationPublishStep((Station) owner, 80.0, 90.0)),
 
                         // 5. Dynamic Changes
-                        new TestStep(this.clockURI, t1, start.plusSeconds(240), owner -> turbineUnsubscribeStep((WindTurbine) owner, Broker.WIND_CHANNEL)),
+                        new TestStep(this.clockURI, t1, start.plusSeconds(240), owner -> turbineUnsubscribeStep((WindTurbine) owner, Broker.DEFAULT_PUBLIC_CHANNEL)),
                         new TestStep(this.clockURI, t1, start.plusSeconds(260), owner -> turbineSubscribeStep((WindTurbine) owner, Bureau.WEATHER_ALERTS_CHANNEL, filterAnyAlert, "Subscribed to all alerts")),
 
                         // 6. Final Activity (Extreme wind)

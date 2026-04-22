@@ -1,10 +1,9 @@
-package fr.sorbonne_u.cps.pubsub.composants;
+package fr.sorbonne_u.cps.pubsub.components;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
-import fr.sorbonne_u.cps.pubsub.filters.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.utils.aclocks.ClocksServer;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
@@ -55,7 +54,7 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         this.installPlugin(this.subscriptionPlugin);
 
         // Create and install the registration plugin (connects to broker)
-        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, false);
         this.installPlugin(this.registrationPlugin);
 
         // Wire plugin references
@@ -70,24 +69,6 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         this.initialiseClock(ClocksServer.STANDARD_INBOUNDPORT_URI, this.testScenario.getClockURI());
         // make the component execute its actions in the test scenario
         this.executeTestScenario(this.testScenario);
-    }
-
-    @Override
-    public synchronized void finalise() throws Exception {
-        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        super.finalise();
-    }
-
-    @Override
-    public synchronized void shutdown() throws ComponentShutdownException {
-        try {
-            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        } catch (Exception e) {
-            throw new ComponentShutdownException(e);
-        }
-        super.shutdown();
     }
 
     @Override

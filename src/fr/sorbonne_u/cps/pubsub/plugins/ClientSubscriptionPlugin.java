@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import fr.sorbonne_u.components.AbstractPlugin;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.cps.pubsub.composants.ClientI;
+import fr.sorbonne_u.cps.pubsub.components.ClientI;
 import fr.sorbonne_u.cps.pubsub.exceptions.NotSubscribedChannelException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnauthorisedClientException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownChannelException;

@@ -5,9 +5,9 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
-import fr.sorbonne_u.cps.pubsub.composants.Station;
-import fr.sorbonne_u.cps.pubsub.composants.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
 import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
@@ -31,7 +31,7 @@ public class AsyncAuditScenario extends AbstractScenario {
     protected static void registerAndSubscribe(WindTurbine windTurbine) {
         try {
             windTurbine.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
-            windTurbine.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            windTurbine.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             windTurbine.traceMessage("Async turbine registered and subscribed\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -56,7 +56,7 @@ public class AsyncAuditScenario extends AbstractScenario {
             message.putProperty("ID", station.getUid());
 
             station.traceMessage(label + " publish start\n");
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, message);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, message);
             station.traceMessage(label + " publish returned\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -66,7 +66,7 @@ public class AsyncAuditScenario extends AbstractScenario {
     protected static void waitForNextMessage(WindTurbine windTurbine) {
         try {
             windTurbine.traceMessage("waitForNextMessage started\n");
-            MessageI message = windTurbine.getSubscriptionPlugin().waitForNextMessage(Broker.WIND_CHANNEL);
+            MessageI message = windTurbine.getSubscriptionPlugin().waitForNextMessage(Broker.DEFAULT_PUBLIC_CHANNEL);
             windTurbine.traceMessage(
                     "waitForNextMessage returned payload=" + message.getPayload() + "\n");
         } catch (Exception e) {
@@ -77,7 +77,7 @@ public class AsyncAuditScenario extends AbstractScenario {
     protected static void futureNextMessage(WindTurbine windTurbine) {
         try {
             windTurbine.traceMessage("getNextMessage started\n");
-            Future<MessageI> future = windTurbine.getSubscriptionPlugin().getNextMessage(Broker.WIND_CHANNEL);
+            Future<MessageI> future = windTurbine.getSubscriptionPlugin().getNextMessage(Broker.DEFAULT_PUBLIC_CHANNEL);
             windTurbine.traceMessage("getNextMessage returned a future\n");
             MessageI message = future.get();
             windTurbine.traceMessage("Future completed payload=" + message.getPayload() + "\n");
@@ -90,7 +90,7 @@ public class AsyncAuditScenario extends AbstractScenario {
         try {
             windTurbine.traceMessage("timed wait started\n");
             MessageI message = windTurbine.getSubscriptionPlugin().waitForNextMessage(
-                    Broker.WIND_CHANNEL,
+                    Broker.DEFAULT_PUBLIC_CHANNEL,
                     Duration.ofSeconds(2));
             windTurbine.traceMessage(
                     "timed wait returned " + (message == null ? "null" : message.getPayload()) + "\n");

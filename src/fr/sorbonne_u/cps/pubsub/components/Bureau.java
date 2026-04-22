@@ -1,4 +1,4 @@
-package fr.sorbonne_u.cps.pubsub.composants;
+package fr.sorbonne_u.cps.pubsub.components;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -9,9 +9,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
-import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert.Level;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
+import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI.Level;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPrivilegedPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
@@ -82,7 +82,7 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.installPlugin(this.subscriptionPlugin);
 
         // Create and install the registration plugin
-        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI);
+        this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, false);
         this.installPlugin(this.registrationPlugin);
 
         // Create and install the publication plugin (PREMIUM class -> PrivilegedClientOutboundPort)
@@ -109,28 +109,6 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.initialiseClock(ClocksServer.STANDARD_INBOUNDPORT_URI, this.testScenario.getClockURI());
         // make the component execute its actions in the test scenario
         this.executeTestScenario(this.testScenario);
-    }
-
-    @Override
-    public synchronized void finalise() throws Exception {
-        this.finalisePlugin(ClientPrivilegedPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientPublicationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientRegistrationPlugin.PLUGIN_URI);
-        this.finalisePlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        super.finalise();
-    }
-
-    @Override
-    public synchronized void shutdown() throws ComponentShutdownException {
-        try {
-            this.uninstallPlugin(ClientPrivilegedPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientPublicationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientRegistrationPlugin.PLUGIN_URI);
-            this.uninstallPlugin(ClientSubscriptionPlugin.PLUGIN_URI);
-        } catch (Exception e) {
-            throw new ComponentShutdownException(e);
-        }
-        super.shutdown();
     }
 
     protected void receiveFromStationsInfo(MessageI message) throws Exception {

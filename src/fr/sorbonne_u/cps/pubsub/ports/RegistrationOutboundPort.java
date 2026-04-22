@@ -71,7 +71,7 @@ public class RegistrationOutboundPort extends AbstractOutboundPort implements Re
     }
 
     @Override
-    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        return ((RegistrationCI) this.getConnector()).modifyFilter(receptionPortURI, channel, filter);
+    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        ((RegistrationCI) this.getConnector()).modifyFilter(receptionPortURI, channel, filter);
     }
 }

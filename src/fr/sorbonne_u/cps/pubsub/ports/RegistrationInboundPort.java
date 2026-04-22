@@ -2,7 +2,7 @@ package fr.sorbonne_u.cps.pubsub.ports;
 
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 
@@ -106,8 +106,11 @@ public class RegistrationInboundPort extends AbstractInboundPort implements Regi
     }
 
     @Override
-    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        return this.getOwner().handleRequest(
-                c -> ((Broker) c).modifyFilter(receptionPortURI, channel, filter));
+    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        this.getOwner().handleRequest(
+                c -> {
+                    ((Broker) c).modifyFilter(receptionPortURI, channel, filter);
+                    return null;
+                } );
     }
 }

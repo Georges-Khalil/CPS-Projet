@@ -2,7 +2,7 @@ package fr.sorbonne_u.cps.pubsub.plugins;
 
 import fr.sorbonne_u.components.AbstractPlugin;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.cps.pubsub.composants.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.AlreadyRegisteredException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownClientException;
@@ -45,10 +45,10 @@ implements	ClientRegistrationI
 	 *
 	 * @param receptionPortURI	URI of the owner's ReceivingInboundPort.
 	 */
-	public ClientRegistrationPlugin(String receptionPortURI) {
+	public ClientRegistrationPlugin(String receptionPortURI, boolean isSenderOnly) {
 		super();
 		this.setPluginURI(PLUGIN_URI);
-		this.receptionPortURI = receptionPortURI;
+		this.receptionPortURI = (isSenderOnly ? "#" : "") + receptionPortURI;
 	}
 
 	// -------------------------------------------------------------------------
