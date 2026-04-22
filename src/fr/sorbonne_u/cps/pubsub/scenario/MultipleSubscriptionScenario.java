@@ -78,7 +78,7 @@ public class MultipleSubscriptionScenario extends AbstractScenario {
             wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
             
             // 1. Subscribe to WIND_CHANNEL (all messages)
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             
             // 2. Subscribe to alert_channel (Only RED or SCARLET)
             MessageFilterI alertFilter = new MessageFilter(
@@ -158,7 +158,7 @@ public class MultipleSubscriptionScenario extends AbstractScenario {
 
                 // Interleaved activity
                 // 1. Station 1 -> WIND_CHANNEL (Received)
-                new TestStep(this.clockURI, s1, start.plusSeconds(60), owner -> publishWind((Station) owner, Broker.WIND_CHANNEL, 10.0)),
+                new TestStep(this.clockURI, s1, start.plusSeconds(60), owner -> publishWind((Station) owner, Broker.DEFAULT_PUBLIC_CHANNEL, 10.0)),
                 
                 // 2. Bureau 1 -> alert_channel (Level.GREEN, Filtered out)
                 new TestStep(this.clockURI, b1, start.plusSeconds(70), owner -> publishAlert((Bureau) owner, fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert.Level.GREEN, "Everything is fine")),
@@ -173,7 +173,7 @@ public class MultipleSubscriptionScenario extends AbstractScenario {
                 new TestStep(this.clockURI, s3, start.plusSeconds(100), owner -> publishWind((Station) owner, "private_channel", 80.0)),
                 
                 // 6. Station 2 -> WIND_CHANNEL (force 40.0, Received)
-                new TestStep(this.clockURI, s2, start.plusSeconds(110), owner -> publishWind((Station) owner, Broker.WIND_CHANNEL, 40.0)),
+                new TestStep(this.clockURI, s2, start.plusSeconds(110), owner -> publishWind((Station) owner, Broker.DEFAULT_PUBLIC_CHANNEL, 40.0)),
                 
                 // 7. Bureau 1 -> alert_channel (Level.SCARLET, Received)
                 new TestStep(this.clockURI, b1, start.plusSeconds(120), owner -> publishAlert((Bureau) owner, fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert.Level.SCARLET, "EVACUATE NOW!")),

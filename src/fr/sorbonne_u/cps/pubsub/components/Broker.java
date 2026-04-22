@@ -73,7 +73,7 @@ public class Broker extends AbstractComponent {
         }
     }
 
-    public static final String WIND_CHANNEL = "wind_channel";
+    public static final String DEFAULT_PUBLIC_CHANNEL = "wind_channel";
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
 
     private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
@@ -110,7 +110,7 @@ public class Broker extends AbstractComponent {
         this.createNewExecutorService(DELIVERY_POOL_URI, DELIVERY_POOL_SIZE, false);
 
         // Default channels
-        this.channels.put(WIND_CHANNEL, new Channel(null, ""));
+        this.channels.put(DEFAULT_PUBLIC_CHANNEL, new Channel(null, ""));
     }
 
     @Override

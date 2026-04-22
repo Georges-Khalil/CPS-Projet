@@ -12,7 +12,6 @@ import fr.sorbonne_u.cps.pubsub.filters.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
-import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 import fr.sorbonne_u.cps.pubsub.meteo.messages.WindMessage;
 
 import java.time.Instant;
@@ -26,7 +25,7 @@ public class SimpleScenario extends AbstractScenario {
         try {
             wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
             wt.traceMessage("WindTurbine : Registered\n");
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             wt.traceMessage("Subscribed to wind_channel\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -41,7 +40,7 @@ public class SimpleScenario extends AbstractScenario {
             station.traceMessage("Station1 : Registered\n");
             // Publish a test message with WindData as payload
             Message msg = new WindMessage(station, 10.0, 5.0);
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station1 : Publish a message on wind_channel - " + msg.getPayload() + "\n");
         } catch (Exception e) {
             throw new RuntimeException(e);

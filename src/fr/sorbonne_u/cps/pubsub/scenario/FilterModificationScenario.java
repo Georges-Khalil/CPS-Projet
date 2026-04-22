@@ -40,7 +40,7 @@ public class FilterModificationScenario extends AbstractScenario {
                     new PropertyFilter("force", new ComparableValueFilter(10.0, ComparableValueFilter.Operator.GT))
                 }
             );
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, filter);
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, filter);
             wt.traceMessage("WindTurbine: Subscribed to wind with filter force > 10.0\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
@@ -57,7 +57,7 @@ public class FilterModificationScenario extends AbstractScenario {
         try {
             Message msg = new Message(new WindData(station.getPosition(), force, 0.0));
             msg.putProperty("force", force);
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station: Published wind data with force=" + force + "\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
@@ -69,7 +69,7 @@ public class FilterModificationScenario extends AbstractScenario {
                     new PropertyFilter("force", new ComparableValueFilter(20.0, ComparableValueFilter.Operator.GT))
                 }
             );
-            wt.getSubscriptionPlugin().modifyFilter(Broker.WIND_CHANNEL, newFilter);
+            wt.getSubscriptionPlugin().modifyFilter(Broker.DEFAULT_PUBLIC_CHANNEL, newFilter);
             wt.traceMessage("WindTurbine: Modified filter to force > 20.0\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }

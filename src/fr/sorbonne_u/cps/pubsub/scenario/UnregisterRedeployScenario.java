@@ -32,7 +32,7 @@ public class UnregisterRedeployScenario extends AbstractScenario {
     static void setupTurbine(WindTurbine wt) {
         try {
             wt.getRegistrationPlugin().register(RegistrationCI.RegistrationClass.FREE);
-            wt.getSubscriptionPlugin().subscribe(Broker.WIND_CHANNEL, new MessageFilter());
+            wt.getSubscriptionPlugin().subscribe(Broker.DEFAULT_PUBLIC_CHANNEL, new MessageFilter());
             wt.traceMessage("WindTurbine: Registered and subscribed\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
@@ -44,7 +44,7 @@ public class UnregisterRedeployScenario extends AbstractScenario {
                 station.getPublicationPlugin().connectToPublishingPort(station.getRegistrationPlugin().getPublishingPortURI());
             }
             Message msg = new Message("Data: " + label);
-            station.getPublicationPlugin().publish(Broker.WIND_CHANNEL, msg);
+            station.getPublicationPlugin().publish(Broker.DEFAULT_PUBLIC_CHANNEL, msg);
             station.traceMessage("Station: Published '" + label + "'\n");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
