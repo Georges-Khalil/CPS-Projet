@@ -75,11 +75,6 @@ implements	ClientRegistrationI
 	}
 
 	@Override
-	public void initialise() throws Exception {
-		super.initialise();
-	}
-
-	@Override
 	public void finalise() throws Exception {
 		if (this.registrationOutboundPort.connected()) {
 			this.getOwner().doPortDisconnection(

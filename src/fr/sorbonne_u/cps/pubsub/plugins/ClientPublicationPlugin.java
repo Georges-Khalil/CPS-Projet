@@ -95,11 +95,6 @@ implements	ClientPublicationI, AbnormalTerminationNotificationCI
 		this.publishingOutboundPort.publishPort();
 	}
 
-	@Override
-	public void initialise() throws Exception {
-		super.initialise();
-	}
-
 	/**
 	 * Connect the publication outbound port to the broker's publishing
 	 * inbound port. Must be called after registration.

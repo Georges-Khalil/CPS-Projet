@@ -61,11 +61,6 @@ implements	PrivilegedClientI
 	}
 
 	@Override
-	public void initialise() throws Exception {
-		super.initialise();
-	}
-
-	@Override
 	public void finalise() throws Exception {
 		super.finalise();
 	}
