@@ -410,21 +410,27 @@ public class Broker extends AbstractComponent {
         }
     }
 
-    public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception { // TODO : R2.6
+    public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        if (channelExist(channel))
-            return false;
+        if (!channelExist(channel))
+            throw new UnknownChannelException();
 
         this.clients_lock.writeLock().lock();
         try {
-            return this.clients.get(receptionPortURI).rc == RegistrationCI.RegistrationClass.PREMIUM;
+            return this.channels.get(channel).isAuthorized(receptionPortURI);
         } finally {
             this.clients_lock.writeLock().unlock();
         }
   }
 
     // ---- Privileged Client ----
+
+    protected boolean isPremium(String receptionPortURI) throws Exception {
+        if (!registered(receptionPortURI))
+            throw new UnknownClientException();
+        return this.clients.get(receptionPortURI).rc == RegistrationCI.RegistrationClass.PREMIUM;
+    }
 
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
         if (!registered(receptionPortURI))
@@ -448,8 +454,10 @@ public class Broker extends AbstractComponent {
     public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
         if (regex == null)
             throw new IllegalArgumentException();
-        if (!channelAuthorised(receptionPortURI, channel))
+        if (!isPremium(receptionPortURI))
             throw new UnauthorisedClientException();
+        if (channelExist(channel))
+            throw new AlreadyExistingChannelException();
         this.channels_lock.writeLock().lock();
         try {
             this.channels.put(channel, new Channel(receptionPortURI, regex));
