@@ -13,6 +13,7 @@ import fr.sorbonne_u.cps.pubsub.ports.AbnormalTerminationNotificationOutboundPor
 import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
 import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
+import jdk.jfr.internal.consumer.RecordingInput;
 
 import java.security.acl.NotOwnerException;
 import java.util.*;
@@ -74,6 +75,7 @@ public class Broker extends AbstractComponent {
         }
     }
 
+    public static final int CHANNEL_CREATION_QUOTA = 3;
     public static final String DEFAULT_PUBLIC_CHANNEL = "wind_channel";
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
 
@@ -448,7 +450,16 @@ public class Broker extends AbstractComponent {
     public boolean channelQuotaReached(String receptionPortURI) throws Exception {
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        return false; // TODO : R2.9
+        this.channels_lock.readLock().lock();
+        try {
+            int count = 0;
+            for (Channel chan : this.channels.values())
+                if (chan.owner_uri != null && chan.owner_uri.equals(receptionPortURI))
+                    count++;
+            return count >= CHANNEL_CREATION_QUOTA;
+        } finally {
+            this.channels_lock.readLock().unlock();
+        }
     }
 
     public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
@@ -458,6 +469,8 @@ public class Broker extends AbstractComponent {
             throw new UnauthorisedClientException();
         if (channelExist(channel))
             throw new AlreadyExistingChannelException();
+        if (channelQuotaReached(receptionPortURI))
+            throw new ChannelQuotaExceededException();
         this.channels_lock.writeLock().lock();
         try {
             this.channels.put(channel, new Channel(receptionPortURI, regex));
