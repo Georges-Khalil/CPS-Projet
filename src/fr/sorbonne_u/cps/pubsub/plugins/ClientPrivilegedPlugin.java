@@ -53,22 +53,8 @@ implements	PrivilegedClientI
 	// Life-cycle methods
 	// -------------------------------------------------------------------------
 
-	@Override
-	public void installOn(ComponentI owner) throws Exception {
-		super.installOn(owner);
-		// No extra interfaces or ports needed; we reuse the publication plugin's
-		// PrivilegedClientOutboundPort.
-	}
-
-	@Override
-	public void finalise() throws Exception {
-		super.finalise();
-	}
-
-	@Override
-	public void uninstall() throws Exception {
-		super.uninstall();
-	}
+    // No extra interfaces or ports needed; we reuse the publication plugin's
+    // PrivilegedClientOutboundPort.
 
 	// -------------------------------------------------------------------------
 	// Helpers

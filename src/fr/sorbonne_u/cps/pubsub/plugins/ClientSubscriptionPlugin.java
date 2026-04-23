@@ -119,11 +119,6 @@ implements	ClientSubscriptionI
 	}
 
 	@Override
-	public void finalise() throws Exception {
-		super.finalise();
-	}
-
-	@Override
 	public void uninstall() throws Exception {
 		this.receivingInboundPort.unpublishPort();
 		this.receivingInboundPort.destroyPort();
