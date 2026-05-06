@@ -131,13 +131,6 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.channels.put(DEFAULT_PUBLIC_CHANNEL, new Channel(null, ""));
     }
 
-    public void connectToNeighbour(String neighbourGossipURI) throws Exception {
-        GossipSenderOutboundPort p = new GossipSenderOutboundPort(this);
-        p.publishPort();
-        this.doPortConnection(p.getPortURI(), neighbourGossipURI, GossipConnector.class.getCanonicalName());
-        this.gossipNeighbours.add(p);
-    }
-
     @Override
     public synchronized void finalise() throws Exception {
         for (Client client : this.clients.values())
@@ -160,7 +153,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     // ---- Publication ----
 
-    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
+    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {  // TODO: gossip here || send by big packet instead of sending each message individually
         if (message == null)
             throw new IllegalArgumentException();
 
@@ -178,11 +171,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     }
 
     protected void submitPublication(String channel, List<MessageI> messages) {
-        this.runTask(RECEPTION_POOL_URI, (FComponentTask) (owner) -> this.acceptPublication(channel, messages));
+        this.runTask(RECEPTION_POOL_URI, (owner) -> this.acceptPublication(channel, messages));
     }
 
     protected void submitPublication(String channel, List<MessageI> messages, String notificationInboundPortURI) {
-        this.runTask(RECEPTION_POOL_URI, (FComponentTask) (owner) -> {
+        this.runTask(RECEPTION_POOL_URI, (owner) -> {
             try {
                 this.acceptPublication(channel, messages);
             } catch (Exception e) {
@@ -195,7 +188,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     }
 
     protected void notifyError(String channel, List<MessageI> messages, String notificationInboundPortURI, Throwable cause) {
-        this.runTask(PROPAGATION_POOL_URI, (FComponentTask) (owner) -> {
+        this.runTask(PROPAGATION_POOL_URI, (owner) -> {
             try {
                 AbnormalTerminationNotificationOutboundPort port = new AbnormalTerminationNotificationOutboundPort(this);
                 port.publishPort();
@@ -220,7 +213,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     protected void acceptPublication(String channel, List<MessageI> messages) {
         for (MessageI message : messages) {
-            this.runTask(PROPAGATION_POOL_URI, (FComponentTask) (owner) -> {
+            this.runTask(PROPAGATION_POOL_URI, (owner) -> {
                 try {
                     this.propagateMessage(channel, message);
                 } catch (Exception e) {
@@ -245,7 +238,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
         for (Subscription entry : subscribers)
             if (entry.filter.match(message))
-                this.runTask(DELIVERY_POOL_URI, (FComponentTask) (owner) -> this.deliverMessage(channel, message, entry.client));
+                this.runTask(DELIVERY_POOL_URI, (owner) -> this.deliverMessage(channel, message, entry.client));
 
     }
 
@@ -258,7 +251,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
+    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {  // TODO: gossip here
         if (messages == null || messages.isEmpty())
             throw new IllegalArgumentException();
         for (MessageI message : messages)
@@ -294,7 +287,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
+    public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception { // TODO: gossip here; Is it useless ???
         if (rc == null)
             throw new IllegalArgumentException();
         if (registered(receptionPortURI))
@@ -484,7 +477,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
+    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception { // TODO: gossip here
         if (regex == null)
             throw new IllegalArgumentException();
         if (!isPremium(receptionPortURI))
@@ -520,7 +513,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.destroyChannelNow(receptionPortURI, channel);
     }
 
-    public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
+    public void destroyChannelNow(String receptionPortURI, String channel) throws Exception { // TODO: gossip here
         if (!hasCreatedChannel(receptionPortURI, channel))
             throw new NotOwnerException();
 
@@ -560,12 +553,83 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     @Override
     public void update(GossipMessageI[] fromSender) { // TODO: change URI for all the brokers (no static ports ...)
-        // I'm going to do that
+        List<GossipMessageI> toForward = new ArrayList<>();
+
+        for (GossipMessageI m : fromSender) {
+            if (this.seenMessages.containsKey(m.gossipMessageURI()) || !(m instanceof GossipMessage)) // TODO: Maybe no continue because Mr. Malenfant doesn't like that
+                continue;
+            this.seenMessages.put(m.gossipMessageURI(), m.timestamp());
+
+            GossipMessage msg = (GossipMessage) m;
+            switch (msg.type) {
+                case PUBLICATION:
+                    this.runTask(PROPAGATION_POOL_URI, owner -> {
+                        try {
+                            this.propagateMessage(msg.channel, msg.pubSubMessage);
+                        } catch (Exception e) {
+                            // ...
+                        }
+                    });
+                    break;
+                case REGISTRATION:
+                    this.clients_lock.writeLock().lock();
+                    try {
+                        if (!this.clients.containsKey(msg.clientURI))
+                            this.clients.put(msg.clientURI, new Client(msg.clientURI, null, msg.clientRC)); // to check
+                    } finally {
+                        this.clients_lock.writeLock().unlock();
+                    }
+                    break;
+                case CHANNEL_CREATION:
+                    this.channels_lock.writeLock().lock();
+                    try {
+                        if (!this.channels.containsKey(msg.channelName))
+                            this.channels.put(msg.channelName,
+                                    new Channel(msg.channelOwner, msg.channelRegex));
+                    } finally {
+                        this.channels_lock.writeLock().unlock();
+                    }
+                    break;
+                case CHANNEL_DESTRUCTION:
+                    this.channels_lock.writeLock().lock();
+                    try {
+                        Channel chan = this.channels.remove(msg.channelName);
+                        for (Subscription sub : chan.subscribers.values())
+                            sub.client.subscriptions.remove(msg.channelName);
+                    } finally {
+                        this.channels_lock.writeLock().unlock();
+                    }
+            }
+            try {
+                toForward.add(m.copyWithNewEmitterURI(this.grip.getPortURI()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try {
+            if (!toForward.isEmpty())
+                this.gossipToNeighbours(toForward.toArray(new GossipMessageI[0]));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void receive(GossipMessageI[] gossipMessages) throws Exception {
         this.runTask(GOSSIP_POOL_URI, owner -> this.update(gossipMessages));
+    }
+
+    public void connectToNeighbour(String neighbourGossipURI) throws Exception {
+        GossipSenderOutboundPort p = new GossipSenderOutboundPort(this);
+        p.publishPort();
+        this.doPortConnection(p.getPortURI(), neighbourGossipURI, GossipConnector.class.getCanonicalName());
+        this.gossipNeighbours.add(p);
+    }
+
+    public void gossipToNeighbours(GossipMessageI[] messages) throws Exception {
+        for (GossipSenderOutboundPort gsop : this.gossipNeighbours)
+            gsop.send(messages);
     }
 
 }
