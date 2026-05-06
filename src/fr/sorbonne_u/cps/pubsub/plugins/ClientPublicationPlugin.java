@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import fr.sorbonne_u.components.AbstractPlugin;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.cps.pubsub.ports.RegistrationOutboundPort;
 import fr.sorbonne_u.cps.pubsub.connectors.PublishingConnector;
 import fr.sorbonne_u.cps.pubsub.connectors.PrivilegedClientConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnauthorisedClientException;
@@ -188,30 +187,16 @@ implements	ClientPublicationI, AbnormalTerminationNotificationCI
 	// ClientPublicationI methods
 	// -------------------------------------------------------------------------
 
-	@Override
-	public boolean channelExist(String channel) {
-		try {
-			return this.getRegistrationPlugin()
-					.getRegistrationOutboundPort()
-					.channelExist(channel);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public boolean channelExist(String channel) {
+        return this.getRegistrationPlugin().channelExist(channel);
+    }
 
-	@Override
-	public boolean channelAuthorised(String channel)
-	throws UnknownClientException, UnknownChannelException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			return regPlugin.getRegistrationOutboundPort()
-					.channelAuthorised(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException | UnknownChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public boolean channelAuthorised(String channel)
+            throws UnknownClientException, UnknownChannelException {
+        return this.getRegistrationPlugin().channelAuthorised(channel);
+    }
 
 	@Override
 	public void publish(String channel, MessageI message)

@@ -5,7 +5,11 @@ import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.connectors.RegistrationConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.AlreadyRegisteredException;
+import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
+import fr.sorbonne_u.cps.pubsub.exceptions.NotSubscribedChannelException;
 import fr.sorbonne_u.cps.pubsub.exceptions.UnknownClientException;
+import fr.sorbonne_u.cps.pubsub.exceptions.UnauthorisedClientException;
+import fr.sorbonne_u.cps.pubsub.exceptions.UnknownChannelException;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI.RegistrationClass;
 import fr.sorbonne_u.cps.pubsub.plugins.interfaces.ClientRegistrationI;
@@ -113,17 +117,83 @@ implements	ClientRegistrationI
 		return this.publishingPortURI;
 	}
 
-	/**
-	 * Return a reference to the registration outbound port.
-	 * Used by other plugins that need access to registration services.
-	 *
-	 * @return	the RegistrationOutboundPort.
-	 */
-	public RegistrationOutboundPort getRegistrationOutboundPort() {
-		return this.registrationOutboundPort;
-	}
+    // -------------------------------------------------------------------------
+    // RegistrationOutboundPort methods
+    // -------------------------------------------------------------------------
 
-	// -------------------------------------------------------------------------
+    public boolean channelExist(String channel) {
+        try {
+            return this.registrationOutboundPort.channelExist(channel);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Boolean channelAuthorised(String channel)
+            throws UnknownClientException, UnknownChannelException {
+        try {
+            return this.registrationOutboundPort.channelAuthorised(
+                    this.receptionPortURI, channel);
+        } catch (UnknownClientException | UnknownChannelException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean subscribed(String channel)
+            throws UnknownClientException, UnknownChannelException {
+        try {
+            return this.registrationOutboundPort.subscribed(
+                    this.receptionPortURI, channel);
+        } catch (UnknownClientException | UnknownChannelException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void subscribe(String channel, MessageFilterI filter)
+            throws UnknownClientException, UnknownChannelException, UnauthorisedClientException {
+        try {
+            this.registrationOutboundPort.subscribe(
+                    this.receptionPortURI, channel, filter);
+        } catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void unsubscribe(String channel)
+            throws UnknownClientException, UnknownChannelException,
+            UnauthorisedClientException, NotSubscribedChannelException {
+        try {
+            this.registrationOutboundPort.unsubscribe(
+                    this.receptionPortURI, channel);
+        } catch (UnknownClientException | UnknownChannelException |
+                 UnauthorisedClientException | NotSubscribedChannelException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void modifyPluginFilter(String channel, MessageFilterI filter)
+            throws UnknownClientException, UnknownChannelException,
+            UnauthorisedClientException, NotSubscribedChannelException {
+        try {
+            this.registrationOutboundPort.modifyFilter(
+                    this.receptionPortURI, channel, filter);
+        } catch (UnknownClientException | UnknownChannelException |
+                 UnauthorisedClientException | NotSubscribedChannelException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------
 	// ClientRegistrationI methods
 	// -------------------------------------------------------------------------
 

@@ -162,89 +162,42 @@ implements	ClientSubscriptionI
 	// ClientSubscriptionI - Signatures called by the owner component
 	// -------------------------------------------------------------------------
 
-	@Override
-	public boolean channelExist(String channel) {
-		try {
-			return this.getRegistrationPlugin()
-					.getRegistrationOutboundPort()
-					.channelExist(channel);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public boolean channelExist(String channel) {
+        return this.getRegistrationPlugin().channelExist(channel);
+    }
 
-	@Override
-	public boolean channelAuthorised(String channel)
-	throws UnknownClientException, UnknownChannelException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			return regPlugin.getRegistrationOutboundPort()
-					.channelAuthorised(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException | UnknownChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public boolean channelAuthorised(String channel)
+            throws UnknownClientException, UnknownChannelException {
+        return this.getRegistrationPlugin().channelAuthorised(channel);
+    }
 
-	@Override
-	public boolean subscribed(String channel)
-	throws UnknownClientException, UnknownChannelException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			return regPlugin.getRegistrationOutboundPort()
-					.subscribed(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException | UnknownChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public boolean subscribed(String channel)
+            throws UnknownClientException, UnknownChannelException {
+        return this.getRegistrationPlugin().subscribed(channel);
+    }
 
-	@Override
-	public void subscribe(String channel, MessageFilterI filter)
-	throws UnknownClientException, UnknownChannelException, UnauthorisedClientException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			regPlugin.getRegistrationOutboundPort()
-					.subscribe(regPlugin.getReceptionPortURI(), channel, filter);
-		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public void subscribe(String channel, MessageFilterI filter)
+            throws UnknownClientException, UnknownChannelException, UnauthorisedClientException {
+        this.getRegistrationPlugin().subscribe(channel, filter);
+    }
 
-	@Override
-	public void unsubscribe(String channel)
-	throws UnknownClientException, UnknownChannelException,
-			UnauthorisedClientException, NotSubscribedChannelException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			regPlugin.getRegistrationOutboundPort()
-					.unsubscribe(regPlugin.getReceptionPortURI(), channel);
-		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException | NotSubscribedChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public void unsubscribe(String channel)
+            throws UnknownClientException, UnknownChannelException,
+            UnauthorisedClientException, NotSubscribedChannelException {
+        this.getRegistrationPlugin().unsubscribe(channel);
+    }
 
-	@Override
-	public void modifyFilter(String channel, MessageFilterI filter)
-	throws UnknownClientException, UnknownChannelException,
-			UnauthorisedClientException, NotSubscribedChannelException {
-		try {
-			ClientRegistrationPlugin regPlugin = this.getRegistrationPlugin();
-			regPlugin.getRegistrationOutboundPort()
-					.modifyFilter(regPlugin.getReceptionPortURI(), channel, filter);
-		} catch (UnknownClientException | UnknownChannelException | UnauthorisedClientException | NotSubscribedChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+    @Override
+    public void modifyFilter(String channel, MessageFilterI filter)
+            throws UnknownClientException, UnknownChannelException,
+            UnauthorisedClientException, NotSubscribedChannelException {
+        this.getRegistrationPlugin().modifyPluginFilter(channel, filter);
+    }
 	// -------------------------------------------------------------------------
 	// ClientSubscriptionI - Signatures called by the broker
 	// -------------------------------------------------------------------------
@@ -290,9 +243,8 @@ implements	ClientSubscriptionI
 		CompletableFuture<MessageI> reservation;
 
 		synchronized (state) {
-			reservation = state.pendingRequests.pollFirst();
-			while (reservation != null && !reservation.complete(message))
-				reservation = state.pendingRequests.pollFirst();
+            do reservation = state.pendingRequests.pollFirst();
+            while (reservation != null && !reservation.complete(message));
 		}
 
 		return reservation != null;
