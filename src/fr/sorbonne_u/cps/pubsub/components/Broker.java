@@ -35,10 +35,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Broker extends AbstractComponent implements GossipImplementationI {
 
     static class Client {
-        final String receiving_uri;
-        final ReceivingOutboundPort port; // Nullable : please check before use (create methods)
-        final List<String> subscriptions;
-        volatile RegistrationCI.RegistrationClassI rc;
+        private final String receiving_uri;
+        private final ReceivingOutboundPort port; // Nullable : please check before use (create methods)
+        private final List<String> subscriptions;
+        private volatile RegistrationCI.RegistrationClassI rc;
 
         Client(String receivingUri, ReceivingOutboundPort port, RegistrationCI.RegistrationClassI rc) {
             this.receiving_uri = receivingUri;
@@ -46,20 +46,54 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             this.rc = rc;
             this.subscriptions = Collections.synchronizedList(new ArrayList<>());
         }
+        public String getReceivingUri() { return receiving_uri; }
+        public ReceivingOutboundPort getPort() { return port; }
+
+        public RegistrationCI.RegistrationClassI getRegistrationClass() { return rc; }
+        public void setRegistrationClass(RegistrationCI.RegistrationClassI rc) {
+            if (rc == null) throw new IllegalArgumentException("Registration class cannot be null");
+            this.rc = rc;
+        }
+        public boolean isPremium() { return rc == RegistrationCI.RegistrationClass.PREMIUM; }
+
+        // Subscription management
+        public List<String> getSubscriptions() { return Collections.unmodifiableList(subscriptions); }
+        public void addSubscription(String channel) {
+            if (channel == null || channel.isEmpty()) throw new IllegalArgumentException();
+            subscriptions.add(channel);
+        }
+        public void removeSubscription(String channel) { subscriptions.remove(channel); }
+        public boolean isSubscribedTo(String channel) { return subscriptions.contains(channel); }
+
     }
 
     static class Subscription {
-        final Client client;
-        volatile MessageFilterI filter;
+        private final Client client;
+        private volatile MessageFilterI filter;
 
         Subscription(Client client, MessageFilterI filter) {
+            if (client == null || filter == null) throw new IllegalArgumentException();
             this.client = client;
             this.filter = filter;
         }
+
+        public Client getClient() { return client; }
+
+        public MessageFilterI getFilter() { return filter; }
+
+        public void setFilter(MessageFilterI filter) {
+            if (filter == null) throw new IllegalArgumentException("Filter cannot be null");
+            this.filter = filter;
+        }
+
+        public boolean filterMatches(MessageI message) {
+            return filter.match(message);
+        }
+
     }
 
     static class Channel {
-        final String owner_uri;
+        final String owner_uri; // todo : make field private (si on a le temps, sinon remove todo)
         final Map<String, Subscription> subscribers;
         private volatile String regex;
 
@@ -134,7 +168,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     @Override
     public synchronized void finalise() throws Exception {
         for (Client client : this.clients.values())
-            this.doPortDisconnection(client.port.getPortURI());
+            this.doPortDisconnection(client.getPort().getPortURI());
         super.finalise();
     }
 
@@ -144,7 +178,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
             for (Client client : this.clients.values())
-                client.port.unpublishPort();
+                client.getPort().unpublishPort();
         } catch (Exception e) {
             throw new ComponentShutdownException(e);
         }
@@ -237,17 +271,17 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
 
         for (Subscription entry : subscribers)
-            if (entry.filter.match(message))
-                this.runTask(DELIVERY_POOL_URI, (owner) -> this.deliverMessage(channel, message, entry.client));
+            if (entry.filterMatches(message))
+                this.runTask(DELIVERY_POOL_URI, (owner) -> this.deliverMessage(channel, message, entry.getClient()));
 
     }
 
     protected void deliverMessage(String channel, MessageI message, Client client) {
         try {
-            client.port.receive(channel, message);
+            client.getPort().receive(channel, message);
         } catch (Exception e) {
             this.traceMessage("Delivery error to "
-                    + client.receiving_uri + ": " + e.getMessage() + "\n");
+                    + client.getReceivingUri() + ": " + e.getMessage() + "\n");
         }
     }
 
@@ -281,7 +315,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.clients_lock.readLock().lock();
         try {
             Client client = this.clients.get(receptionPortURI);
-            return client != null && client.rc.equals(rc);
+            return client != null && client.getRegistrationClass().equals(rc);
         } finally {
             this.clients_lock.readLock().unlock();
         }
@@ -320,7 +354,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             throw new UnknownClientException();
         this.clients_lock.writeLock().lock();
         try {
-            this.clients.get(receptionPortURI).rc = rc;
+            this.clients.get(receptionPortURI).setRegistrationClass(rc);
         } finally {
             this.clients_lock.writeLock().unlock();
         }
@@ -335,12 +369,12 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.clients_lock.writeLock().lock();
         try {
             Client client = this.clients.remove(receptionPortURI);
-            for (String channel : client.subscriptions)
+            for (String channel : client.getSubscriptions())
                 this.channels.get(channel).subscribers.remove(receptionPortURI);
 
-            this.doPortDisconnection(client.port.getPortURI());
-            client.port.unpublishPort();
-            client.port.destroyPort();
+            this.doPortDisconnection(client.getPort().getPortURI());
+            client.getPort().unpublishPort();
+            client.getPort().destroyPort();
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.writeLock().unlock();
@@ -366,7 +400,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
         this.clients_lock.readLock().lock();
         try {
-            return this.clients.get(receptionPortURI).subscriptions.contains(channel);
+            return this.clients.get(receptionPortURI).isSubscribedTo(channel);
         } finally {
             this.clients_lock.readLock().unlock();
         }
@@ -384,7 +418,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.clients_lock.readLock().lock();
         try {
             this.channels.get(channel).subscribers.put(receptionPortURI, new Subscription(this.clients.get(receptionPortURI), filter));
-            this.clients.get(receptionPortURI).subscriptions.add(channel);
+            this.clients.get(receptionPortURI).addSubscription(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
@@ -400,7 +434,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         try {
             Client client = this.clients.get(receptionPortURI);
             this.channels.get(channel).subscribers.remove(receptionPortURI);
-            client.subscriptions.remove(channel);
+            client.removeSubscription(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
@@ -420,7 +454,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             Subscription sub = this.channels.get(channel).subscribers.get(receptionPortURI);
             if (sub == null)
                 throw new RuntimeException("Client subscribed but Subscription not found");
-            sub.filter = filter;
+            sub.setFilter(filter);
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
@@ -446,7 +480,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     protected boolean isPremium(String receptionPortURI) throws Exception {
         if (!registered(receptionPortURI))
             throw new UnknownClientException();
-        return this.clients.get(receptionPortURI).rc == RegistrationCI.RegistrationClass.PREMIUM;
+        return this.clients.get(receptionPortURI).isPremium();
     }
 
     public boolean hasCreatedChannel(String receptionPortURI, String channel) throws Exception {
@@ -521,7 +555,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         try {
             Channel chan = this.channels.remove(channel);
             for (Subscription sub : chan.subscribers.values())
-                sub.client.subscriptions.remove(channel);
+                sub.getClient().removeSubscription(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
         }
@@ -595,7 +629,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                     try {
                         Channel chan = this.channels.remove(msg.channelName);
                         for (Subscription sub : chan.subscribers.values())
-                            sub.client.subscriptions.remove(msg.channelName);
+                            sub.getClient().removeSubscription(msg.channelName);
                     } finally {
                         this.channels_lock.writeLock().unlock();
                     }
