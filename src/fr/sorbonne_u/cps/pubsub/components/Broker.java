@@ -19,7 +19,7 @@ import fr.sorbonne_u.cps.pubsub.ports.*;
 import java.security.acl.NotOwnerException;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -110,13 +110,18 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         public boolean isAuthorized(String uri) {
             return regex.isEmpty() || uri.matches(this.regex);
         }
+
+        // Subscription management during batch propagation
+        public Collection<Subscription> getSubscriptions() {
+            return Collections.unmodifiableCollection(subscribers.values());
+        }
     }
 
     public static final int CHANNEL_CREATION_QUOTA = 3;
     public static final String DEFAULT_PUBLIC_CHANNEL = "wind_channel";
     public static final String BROKER_REGISTRATION_URI = "broker-registration";
 
-    private static final String BROKER_PUBLISH_URI = "broker-publish"; // WILL change in the future
+    private static final String BROKER_PUBLISH_URI = "broker-publish"; // todo WILL change in the future
     private static final String RECEPTION_POOL_URI = "reception-pool";
     private static final String PROPAGATION_POOL_URI = "propagation-pool";
     private static final String DELIVERY_POOL_URI = "delivery-pool";
@@ -135,6 +140,10 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     protected final HashMap<String, Client> clients;
     protected final ReadWriteLock channels_lock, clients_lock;
 
+    private static final long BATCH_FLUSH_INTERVAL_MS = 50L;        // Batch
+    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<MessageI>> pendingMessages;
+    private ScheduledExecutorService flushScheduler;
+
     protected final List<GossipSenderOutboundPort> gossipNeighbours;
     private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>();
 
@@ -150,11 +159,22 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.channels_lock = new ReentrantReadWriteLock();
         this.clients_lock = new ReentrantReadWriteLock();
         this.gossipNeighbours = new ArrayList<>();
+        this.pendingMessages = new ConcurrentHashMap<>(); // Batch
+        this.pendingMessages.put(DEFAULT_PUBLIC_CHANNEL, new ConcurrentLinkedQueue<>());
 
         // Pool instantiation using what is available in BCM4Java (also shuts down automatically)
         this.createNewExecutorService(RECEPTION_POOL_URI, RECEPTION_POOL_SIZE, false);
         this.createNewExecutorService(PROPAGATION_POOL_URI, PROPAGATION_POOL_SIZE, false);
         this.createNewExecutorService(DELIVERY_POOL_URI, DELIVERY_POOL_SIZE, false);
+
+        // Scheduling when the message queue is emptied
+        this.flushScheduler = Executors.newSingleThreadScheduledExecutor();
+        this.flushScheduler.scheduleAtFixedRate(
+                this::flushAllChannels,
+                BATCH_FLUSH_INTERVAL_MS,
+                BATCH_FLUSH_INTERVAL_MS,
+                TimeUnit.MILLISECONDS
+        );
 
         // Gossip
         this.createNewExecutorService(GOSSIP_POOL_URI, GOSSIP_POOL_SIZE, false);
@@ -185,7 +205,9 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         super.shutdown();
     }
 
-    // ---- Publication ----
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //  Publication
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {  // TODO: gossip here || send by big packet instead of sending each message individually
         if (message == null)
@@ -205,7 +227,13 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     }
 
     protected void submitPublication(String channel, List<MessageI> messages) {
-        this.runTask(RECEPTION_POOL_URI, (owner) -> this.acceptPublication(channel, messages));
+        this.runTask(RECEPTION_POOL_URI, (owner) -> {
+            try {
+                this.acceptPublication(channel, messages);
+            } catch (UnknownChannelException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     protected void submitPublication(String channel, List<MessageI> messages, String notificationInboundPortURI) {
@@ -245,40 +273,49 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         });
     }
 
-    protected void acceptPublication(String channel, List<MessageI> messages) {
-        for (MessageI message : messages) {
-            this.runTask(PROPAGATION_POOL_URI, (owner) -> {
-                try {
-                    this.propagateMessage(channel, message);
-                } catch (Exception e) {
-                    this.traceMessage("Propagation error: " + e.getMessage() + "\n");
-                }
-            });
-        }
+    protected void acceptPublication(String channel, List<MessageI> messages) throws UnknownChannelException{
+        ConcurrentLinkedQueue<MessageI> queue = this.pendingMessages.get(channel);
+        if (queue == null)
+            throw new UnknownChannelException();
+        queue.addAll(messages);
     }
 
-    protected void propagateMessage(String channel, MessageI message) throws UnknownChannelException {
-        Collection<Subscription> subscribers;
+    // Propagation Pool task
+    protected void propagateBatch(String channel, List<MessageI> batch) throws UnknownChannelException {
+        Map<Client, List<MessageI>> toDeliver = new HashMap<>();
 
         this.channels_lock.readLock().lock();
         try {
-            Channel chan = channels.get(channel);
-            if (chan == null)
-                throw new UnknownChannelException();
-            subscribers = chan.subscribers.values();
+            Channel chan = this.channels.get(channel);
+            if (chan == null) return;
+
+            for (Subscription sub : chan.getSubscriptions()) {
+                List<MessageI> matching = new ArrayList<>();
+                for (MessageI message : batch)
+                    if (sub.filterMatches(message))
+                        matching.add(message);
+
+                if (!matching.isEmpty())
+                    toDeliver.put(sub.getClient(), matching);
+            }
         } finally {
             this.channels_lock.readLock().unlock();
         }
 
-        for (Subscription entry : subscribers)
-            if (entry.filterMatches(message))
-                this.runTask(DELIVERY_POOL_URI, (owner) -> this.deliverMessage(channel, message, entry.getClient()));
-
+        // Une seule tâche de livraison par client avec tous ses messages
+        for (Map.Entry<Client, List<MessageI>> entry : toDeliver.entrySet())
+            this.runTask(DELIVERY_POOL_URI, owner ->
+                    this.deliverBatch(channel, entry.getKey(), entry.getValue())
+            );
     }
 
-    protected void deliverMessage(String channel, MessageI message, Client client) {
+    // Delivery pool task
+    protected void deliverBatch(String channel, Client client, List<MessageI> messages) {
         try {
-            client.getPort().receive(channel, message);
+            if (messages.size() == 1)
+                client.getPort().receive(channel, messages.get(0));
+            else
+                client.getPort().receive(channel, messages.toArray(new MessageI[0]));
         } catch (Exception e) {
             this.traceMessage("Delivery error to "
                     + client.getReceivingUri() + ": " + e.getMessage() + "\n");
@@ -296,7 +333,37 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.submitPublication(channel, new ArrayList<>(messages));
     }
 
-    // ---- Registering ----
+    protected void flushAllChannels() {
+        for (Map.Entry<String, ConcurrentLinkedQueue<MessageI>> entry
+                : this.pendingMessages.entrySet()) {
+
+            String channel = entry.getKey();
+            ConcurrentLinkedQueue<MessageI> queue = entry.getValue();
+
+            if (queue.isEmpty()) continue;
+
+            //
+            List<MessageI> batch = new ArrayList<>();
+            MessageI msg;
+            while ((msg = queue.poll()) != null)
+                batch.add(msg);
+
+            if (batch.isEmpty()) continue;
+
+            this.runTask(PROPAGATION_POOL_URI, (owner) -> {
+                        try {
+                            this.propagateBatch(channel, batch);
+                        } catch (UnknownChannelException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
+        }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //  Registering
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     public boolean registered(String receptionPortURI) throws Exception {
         if (receptionPortURI == null || receptionPortURI.isEmpty())
@@ -476,7 +543,9 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
   }
 
-    // ---- Privileged Client ----
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //   Privileged Client
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     protected boolean isPremium(String receptionPortURI) throws Exception {
         if (!registered(receptionPortURI))
@@ -524,6 +593,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.channels_lock.writeLock().lock();
         try {
             this.channels.put(channel, new Channel(receptionPortURI, regex));
+            this.pendingMessages.put(channel, new ConcurrentLinkedQueue<>()); // batched messages
         } finally {
             this.channels_lock.writeLock().unlock();
         }
@@ -555,6 +625,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.channels_lock.writeLock().lock();
         try {
             Channel chan = this.channels.remove(channel);
+            this.pendingMessages.remove(channel); // Todo: are the messages lost this way?
             for (Subscription sub : chan.subscribers.values())
                 sub.getClient().removeSubscription(channel);
         } finally {
@@ -586,6 +657,10 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.submitPublication(channel, new ArrayList<>(messages), notificationInboundPortURI);
     }
 
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Gossip
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     @Override
     public void update(GossipMessageI[] fromSender) { // TODO: change URI for all the brokers (no static ports ...)
         List<GossipMessageI> toForward = new ArrayList<>();
@@ -600,7 +675,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                 case PUBLICATION:
                     this.runTask(PROPAGATION_POOL_URI, owner -> {
                         try {
-                            this.propagateMessage(msg.channel, msg.pubSubMessage);
+                            this.propagateBatch(msg.channel, (List<MessageI>) msg.pubSubMessage); // todo : verifier comportement
                         } catch (Exception e) {
                             // ...
                         }
