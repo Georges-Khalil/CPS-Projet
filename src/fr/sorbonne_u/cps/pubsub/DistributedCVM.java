@@ -2,8 +2,10 @@ package fr.sorbonne_u.cps.pubsub;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractCVM;
+import fr.sorbonne_u.components.cvm.AbstractDistributedCVM;
 import fr.sorbonne_u.cps.pubsub.components.Broker;
-import fr.sorbonne_u.cps.pubsub.scenario.*;
+import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
+import fr.sorbonne_u.cps.pubsub.scenario.FullOperationScenario;
 import fr.sorbonne_u.utils.aclocks.ClocksServer;
 
 import java.util.concurrent.TimeUnit;
@@ -11,35 +13,38 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
-public class CVM extends AbstractCVM {
+public class DistributedCVM extends AbstractDistributedCVM {
 
-    public CVM() throws Exception {
-        super();
+    protected static final String BROKER_JVM_URI = "BROKER_JVM";
+    protected static final String CLIENTS_JVM_URI = "CLIENTS_JVM";
+
+    public DistributedCVM(String[] args) throws Exception {
+        super(args);
+    }
+
+    @Override
+    public void instantiateAndPublish() throws Exception {
+        switch (getThisJVMURI()) {
+            case BROKER_JVM_URI:
+                break;
+            case CLIENTS_JVM_URI:
+                break;
+            default:
+                throw new Exception("URI unknow : " + getThisJVMURI());
+        }
     }
 
     @Override
     public void deploy() throws Exception {
 
         // ----- Creation of the components -----
-
         String broker = AbstractComponent.createComponent(
                 Broker.class.getCanonicalName(),
                 new Object[]{}
         );
 
         // ----- Choose the test scenario -----
-        // AbstractScenario scenario = new SimpleScenario(this);
-        // AbstractScenario scenario = new AsyncAuditScenario(this);
-        //AbstractScenario scenario = new AsyncErrorScenario(this);
         AbstractScenario scenario = new FullOperationScenario(this);
-        // AbstractScenario scenario = new ComplexInteractionScenario(this);
-        // AbstractScenario scenario = new SecurityTestScenario(this);
-        // AbstractScenario scenario = new LargeScaleScenario(this);
-        // AbstractScenario scenario = new ChannelManagementScenario(this);
-        // AbstractScenario scenario = new FilterModificationScenario(this);
-        // AbstractScenario scenario = new MultipleSubscriptionScenario(this);
-        // AbstractScenario scenario = new UnregisterRedeployScenario(this);
-        //AbstractScenario scenario = new ServiceClassUpgradeScenario(this);
 
         // create the clock server and the clock used to synchronise the
         // components actions in the test scenario
@@ -62,7 +67,7 @@ public class CVM extends AbstractCVM {
     }
 
     public static void main(String[] args) throws Exception {
-        CVM cvm = new CVM();
+        DistributedCVM cvm = new DistributedCVM(args);
         cvm.startStandardLifeCycle(100000L);
         System.exit(0);
     }

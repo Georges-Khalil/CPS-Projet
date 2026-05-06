@@ -3,20 +3,23 @@ package fr.sorbonne_u.cps.pubsub.components;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.annotations.OfferedInterfaces;
 import fr.sorbonne_u.components.annotations.RequiredInterfaces;
-import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.cps.gossip.interfaces.GossipImplementationI;
+import fr.sorbonne_u.cps.gossip.interfaces.GossipMessageI;
+import fr.sorbonne_u.cps.gossip.interfaces.GossipReceiverCI;
+import fr.sorbonne_u.cps.gossip.interfaces.GossipSenderCI;
+import fr.sorbonne_u.cps.pubsub.connectors.AbnormalTerminationNotificationConnector;
+import fr.sorbonne_u.cps.pubsub.connectors.GossipConnector;
+import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.*;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
-import fr.sorbonne_u.cps.pubsub.connectors.AbnormalTerminationNotificationConnector;
-import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
-import fr.sorbonne_u.cps.pubsub.ports.AbnormalTerminationNotificationOutboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.PrivilegedClientInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.RegistrationInboundPort;
-import fr.sorbonne_u.cps.pubsub.ports.ReceivingOutboundPort;
-import jdk.jfr.internal.consumer.RecordingInput;
+import fr.sorbonne_u.cps.pubsub.message.GossipMessage;
+import fr.sorbonne_u.cps.pubsub.ports.*;
 
 import java.security.acl.NotOwnerException;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -27,9 +30,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
-@OfferedInterfaces(offered = {RegistrationCI.class, PrivilegedClientCI.class})
-@RequiredInterfaces(required = {ReceivingCI.class})
-public class Broker extends AbstractComponent {
+@OfferedInterfaces(offered = {RegistrationCI.class, PrivilegedClientCI.class, GossipReceiverCI.class})
+@RequiredInterfaces(required = {ReceivingCI.class, GossipSenderCI.class})
+public class Broker extends AbstractComponent implements GossipImplementationI {
 
     static class Client {
         final String receiving_uri;
@@ -83,17 +86,23 @@ public class Broker extends AbstractComponent {
     private static final String RECEPTION_POOL_URI = "reception-pool";
     private static final String PROPAGATION_POOL_URI = "propagation-pool";
     private static final String DELIVERY_POOL_URI = "delivery-pool";
+    private static final String GOSSIP_POOL_URI = "gossip-pool";
 
     private static final int RECEPTION_POOL_SIZE = 2;
     private static final int PROPAGATION_POOL_SIZE = 2;
     private static final int DELIVERY_POOL_SIZE = 4;
+    private static final int    GOSSIP_POOL_SIZE = 2;
 
     protected final PrivilegedClientInboundPort bpip;
     protected final RegistrationInboundPort brip;
+    protected final GossipReceiverInboundPort grip;
 
     protected final HashMap<String, Channel> channels;
     protected final HashMap<String, Client> clients;
     protected final ReadWriteLock channels_lock, clients_lock;
+
+    protected final List<GossipSenderOutboundPort> gossipNeighbours;
+    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>();
 
     protected Broker() throws Exception {
         super(1, 0);
@@ -106,14 +115,27 @@ public class Broker extends AbstractComponent {
         this.clients = new HashMap<>();
         this.channels_lock = new ReentrantReadWriteLock();
         this.clients_lock = new ReentrantReadWriteLock();
+        this.gossipNeighbours = new ArrayList<>();
 
         // Pool instantiation using what is available in BCM4Java (also shuts down automatically)
         this.createNewExecutorService(RECEPTION_POOL_URI, RECEPTION_POOL_SIZE, false);
         this.createNewExecutorService(PROPAGATION_POOL_URI, PROPAGATION_POOL_SIZE, false);
         this.createNewExecutorService(DELIVERY_POOL_URI, DELIVERY_POOL_SIZE, false);
 
+        // Gossip
+        this.createNewExecutorService(GOSSIP_POOL_URI, GOSSIP_POOL_SIZE, false);
+        this.grip = new GossipReceiverInboundPort("gossip-receiver-" + reflectionInboundPortURI, this);
+        this.grip.publishPort();
+
         // Default channels
         this.channels.put(DEFAULT_PUBLIC_CHANNEL, new Channel(null, ""));
+    }
+
+    public void connectToNeighbour(String neighbourGossipURI) throws Exception {
+        GossipSenderOutboundPort p = new GossipSenderOutboundPort(this);
+        p.publishPort();
+        this.doPortConnection(p.getPortURI(), neighbourGossipURI, GossipConnector.class.getCanonicalName());
+        this.gossipNeighbours.add(p);
     }
 
     @Override
@@ -535,4 +557,15 @@ public class Broker extends AbstractComponent {
         this.validatePublicationRequest(receptionPortURI, channel);
         this.submitPublication(channel, new ArrayList<>(messages), notificationInboundPortURI);
     }
+
+    @Override
+    public void update(GossipMessageI[] fromSender) { // TODO: change URI for all the brokers (no static ports ...)
+        // I'm going to do that
+    }
+
+    @Override
+    public void receive(GossipMessageI[] gossipMessages) throws Exception {
+        this.runTask(GOSSIP_POOL_URI, owner -> this.update(gossipMessages));
+    }
+
 }
