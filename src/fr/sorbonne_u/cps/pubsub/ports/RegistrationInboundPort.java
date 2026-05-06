@@ -106,11 +106,8 @@ public class RegistrationInboundPort extends AbstractInboundPort implements Regi
     }
 
     @Override
-    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        this.getOwner().handleRequest(
-                c -> {
-                    ((Broker) c).modifyFilter(receptionPortURI, channel, filter);
-                    return null;
-                } );
+    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        return this.getOwner().handleRequest(
+                c -> ((Broker) c).modifyFilter(receptionPortURI, channel, filter));
     }
 }

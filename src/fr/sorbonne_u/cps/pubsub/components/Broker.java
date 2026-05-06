@@ -441,11 +441,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
         if (filter == null)
-            throw new IllegalArgumentException();
+            return false; // Si on ne peut pas appliquer le filtre, on doit return false.
         if (!subscribed(receptionPortURI, channel))
-            throw new NotSubscribedChannelException();
+            return false;
 
         this.channels_lock.writeLock().lock();
         this.clients_lock.readLock().lock();
@@ -453,12 +453,13 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             Client client = this.clients.get(receptionPortURI);
             Subscription sub = this.channels.get(channel).subscribers.get(receptionPortURI);
             if (sub == null)
-                throw new RuntimeException("Client subscribed but Subscription not found");
+                return false;
             sub.setFilter(filter);
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
         }
+        return true;
     }
 
     public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {

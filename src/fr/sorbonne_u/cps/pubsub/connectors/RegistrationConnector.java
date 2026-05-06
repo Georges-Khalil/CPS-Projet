@@ -60,7 +60,7 @@ public class RegistrationConnector extends AbstractConnector implements Registra
     }
 
     @Override
-    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
-        ((RegistrationCI) this.offering).modifyFilter(receptionPortURI, channel, filter);
+    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+        return ((RegistrationCI) this.offering).modifyFilter(receptionPortURI, channel, filter);
     }
 }
