@@ -43,8 +43,20 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
         ((PrivilegedClientCI) this.getConnector()).destroyChannel(receptionPortURI, channel);
     }
 
+    // todo : should this be empty?
     @Override
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
 
+    }
+
+    // todo : figure out what to do with this method
+    @Override
+    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
+
+    }
+
+    @Override
+    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
+        return false;
     }
 }
