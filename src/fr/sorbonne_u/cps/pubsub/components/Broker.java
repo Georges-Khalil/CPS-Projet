@@ -187,6 +187,14 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     @Override
     public synchronized void finalise() throws Exception {
+        // Scheduler stop
+        this.flushScheduler.shutdown(); // todo: is that all?
+
+        // Gossip disconnection
+        for (GossipSenderOutboundPort p : this.gossipNeighbours)
+            this.doPortDisconnection(p.getPortURI());
+
+        // Client disconnection
         for (Client client : this.clients.values())
             this.doPortDisconnection(client.getPort().getPortURI());
         super.finalise();
@@ -197,6 +205,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         try {
             this.bpip.unpublishPort();
             this.brip.unpublishPort();
+            this.grip.unpublishPort();
+            for (GossipSenderOutboundPort p : this.gossipNeighbours){
+                p.unpublishPort();
+                p.destroyPort();
+            }
             for (Client client : this.clients.values())
                 client.getPort().unpublishPort();
         } catch (Exception e) {
