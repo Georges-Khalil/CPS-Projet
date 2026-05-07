@@ -145,7 +145,8 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     private ScheduledExecutorService flushScheduler;
 
     protected final List<GossipSenderOutboundPort> gossipNeighbours;
-    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>();
+    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>(); // todo: grandit pour toujours ? jamais cleaned
+    // todo : verifier que l'uri des messages ne va pas changer.
 
     protected Broker() throws Exception {
         super(1, 0);
@@ -188,7 +189,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     @Override
     public synchronized void finalise() throws Exception {
         // Scheduler stop
-        this.flushScheduler.shutdown(); // todo: is that all?
+        this.flushScheduler.shutdown(); // todo: is that all for shutting down the scheduler ?
 
         // Gossip disconnection
         for (GossipSenderOutboundPort p : this.gossipNeighbours)
@@ -222,7 +223,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     //  Publication
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {  // TODO: gossip here || send by big packet instead of sending each message individually
+    public void publish(String receptionPortURI, String channel, MessageI message) throws Exception {
         if (message == null)
             throw new IllegalArgumentException();
 
@@ -243,6 +244,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.runTask(RECEPTION_POOL_URI, (owner) -> {
             try {
                 this.acceptPublication(channel, messages);
+                this.gossipPublication(channel, messages);
             } catch (UnknownChannelException e) {
                 throw new RuntimeException(e);
             }
@@ -253,6 +255,8 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.runTask(RECEPTION_POOL_URI, (owner) -> {
             try {
                 this.acceptPublication(channel, messages);
+                // Gossip !
+                this.gossipPublication(channel, messages);
             } catch (Exception e) {
                 this.traceMessage("Publication error: " + e.getMessage() + "\n");
                 if (notificationInboundPortURI != null) {
@@ -324,6 +328,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     // Delivery pool task
     protected void deliverBatch(String channel, Client client, List<MessageI> messages) {
+        if (client.getPort() == null) return;
         try {
             if (messages.size() == 1)
                 client.getPort().receive(channel, messages.get(0));
@@ -335,7 +340,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {  // TODO: gossip here
+    public void publish(String receptionPortURI, String channel, ArrayList<MessageI> messages) throws Exception {
         if (messages == null || messages.isEmpty())
             throw new IllegalArgumentException();
         for (MessageI message : messages)
@@ -401,7 +406,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception { // TODO: gossip here; Is it useless ???
+    public String register(String receptionPortURI, RegistrationCI.RegistrationClass rc) throws Exception {
         if (rc == null)
             throw new IllegalArgumentException();
         if (registered(receptionPortURI))
@@ -424,6 +429,19 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         } finally {
             this.clients_lock.writeLock().unlock();
         }
+
+        // Gossip !
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.registration(
+                        this.grip.getPortURI(), receptionPortURI, rc);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip register error: " + e.getMessage());
+            }
+        });
+
         return BROKER_PUBLISH_URI;
     }
 
@@ -438,6 +456,18 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         } finally {
             this.clients_lock.writeLock().unlock();
         }
+
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.clientRcUpdate(
+                        this.grip.getPortURI(), receptionPortURI, rc);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip modifyServiceClass error: " + e.getMessage() + "\n");
+            }
+        });
+
         return BROKER_PUBLISH_URI;
     }
 
@@ -452,9 +482,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             for (String channel : client.getSubscriptions())
                 this.channels.get(channel).subscribers.remove(receptionPortURI);
 
-            this.doPortDisconnection(client.getPort().getPortURI());
-            client.getPort().unpublishPort();
-            client.getPort().destroyPort();
+            if (client.getPort() != null) {
+                this.doPortDisconnection(client.getPort().getPortURI());
+                client.getPort().unpublishPort();
+                client.getPort().destroyPort();
+            }
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.writeLock().unlock();
@@ -548,11 +580,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         if (!channelExist(channel))
             throw new UnknownChannelException();
 
-        this.clients_lock.writeLock().lock();
+        this.clients_lock.readLock().lock();
         try {
             return this.channels.get(channel).isAuthorized(receptionPortURI);
         } finally {
-            this.clients_lock.writeLock().unlock();
+            this.clients_lock.readLock().unlock();
         }
   }
 
@@ -594,7 +626,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception { // TODO: gossip here
+    public void createChannel(String receptionPortURI, String channel, String regex) throws Exception {
         if (regex == null)
             throw new IllegalArgumentException();
         if (!isPremium(receptionPortURI))
@@ -610,6 +642,17 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         } finally {
             this.channels_lock.writeLock().unlock();
         }
+
+        // Gossip !
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.channelCreation(this.grip.getPortURI(), channel, receptionPortURI, regex);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip register error: " + e.getMessage());
+            }
+        });
     }
 
     public void modifyAuthorisedUsers(String receptionPortURI, String channel, String regex) throws Exception {
@@ -623,6 +666,16 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         } finally {
             this.channels_lock.writeLock().unlock();
         }
+
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.channelRegexUpdate(this.grip.getPortURI(), channel, regex);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip modifyAuthorisedUsers error: " + e.getMessage() + "\n");
+            }
+        });
     }
 
     public void destroyChannel(String receptionPortURI, String channel) throws Exception {
@@ -631,19 +684,49 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.destroyChannelNow(receptionPortURI, channel);
     }
 
-    public void destroyChannelNow(String receptionPortURI, String channel) throws Exception { // TODO: gossip here
+    public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
         if (!hasCreatedChannel(receptionPortURI, channel))
             throw new NotOwnerException();
 
+        // Forced flush of the channel so the messages still get sent to the subscribers.
+        ConcurrentLinkedQueue<MessageI> queue = this.pendingMessages.get(channel);
+        List<MessageI> remaining = new ArrayList<>();
+        if (queue != null && !queue.isEmpty()) {
+            MessageI msg;
+            while ((msg = queue.poll()) != null)
+                remaining.add(msg);
+        }
+
+        Channel chan;
         this.channels_lock.writeLock().lock();
         try {
-            Channel chan = this.channels.remove(channel);
-            this.pendingMessages.remove(channel); // Todo: are the messages lost this way?
-            for (Subscription sub : chan.subscribers.values())
-                sub.getClient().removeSubscription(channel);
+            chan = this.channels.remove(channel);
+            this.pendingMessages.remove(channel);
+            if (chan != null)
+                for (Subscription sub : chan.subscribers.values())
+                    sub.getClient().removeSubscription(channel);
         } finally {
             this.channels_lock.writeLock().unlock();
         }
+
+        // Flush all messages that were not sent to the subscribers.
+        if (chan != null && !remaining.isEmpty()) {
+            this.runTask(PROPAGATION_POOL_URI, owner -> {
+                try { this.propagateBatch(channel, remaining); }
+                catch (Exception e) { this.traceMessage("DestroyChannel flush error: " + e.getMessage()); }
+            });
+        }
+
+        // Gossip !
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.channelDestruction(this.grip.getPortURI(), channel);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip register error: " + e.getMessage());
+            }
+        });
     }
 
 
@@ -684,21 +767,21 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
             this.seenMessages.put(m.gossipMessageURI(), m.timestamp());
 
             GossipMessage msg = (GossipMessage) m;
-            switch (msg.type) {
+            switch (msg.getType()) {
                 case PUBLICATION:
-                    this.runTask(PROPAGATION_POOL_URI, owner -> {
+                    this.runTask(RECEPTION_POOL_URI, owner -> {
                         try {
-                            this.propagateBatch(msg.channel, (List<MessageI>) msg.pubSubMessage); // todo : verifier comportement
+                            this.acceptPublication(msg.getChannel(), msg.getPubSubMessages());
                         } catch (Exception e) {
-                            // ...
+                            this.traceMessage("Gossip publication error: " + e.getMessage());
                         }
                     });
                     break;
                 case REGISTRATION:
                     this.clients_lock.writeLock().lock();
                     try {
-                        if (!this.clients.containsKey(msg.clientURI))
-                            this.clients.put(msg.clientURI, new Client(msg.clientURI, null, msg.clientRC)); // to check
+                        if (!this.clients.containsKey(msg.getClientURI()))
+                            this.clients.put(msg.getClientURI(), new Client(msg.getClientURI(), null, msg.getClientRC())); // to check
                     } finally {
                         this.clients_lock.writeLock().unlock();
                     }
@@ -706,9 +789,10 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                 case CHANNEL_CREATION:
                     this.channels_lock.writeLock().lock();
                     try {
-                        if (!this.channels.containsKey(msg.channelName))
-                            this.channels.put(msg.channelName,
-                                    new Channel(msg.channelOwner, msg.channelRegex));
+                        if (!this.channels.containsKey(msg.getChannelName())) {
+                            this.channels.put(msg.getChannelName(), new Channel(msg.getChannelOwner(), msg.getChannelRegex()));
+                            this.pendingMessages.put(msg.getChannelName(), new ConcurrentLinkedQueue<>());
+                        }
                     } finally {
                         this.channels_lock.writeLock().unlock();
                     }
@@ -716,12 +800,31 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                 case CHANNEL_DESTRUCTION:
                     this.channels_lock.writeLock().lock();
                     try {
-                        Channel chan = this.channels.remove(msg.channelName);
+                        Channel chan = this.channels.remove(msg.getChannelName());
+                        this.pendingMessages.remove(msg.getChannelName()); // todo verifier
                         for (Subscription sub : chan.subscribers.values())
-                            sub.getClient().removeSubscription(msg.channelName);
+                            sub.getClient().removeSubscription(msg.getChannelName());
                     } finally {
                         this.channels_lock.writeLock().unlock();
                     }
+                    break;
+                case CHANNEL_REGEX_UPDATE:
+                    this.channels_lock.writeLock().lock();
+                    try {
+                        Channel chan = this.channels.get(msg.getChannelName());
+                        if (chan != null)
+                            chan.setRegex(msg.getChannelRegex());
+                    } finally { this.channels_lock.writeLock().unlock(); }
+                    break;
+
+                case CLIENT_RC_UPDATE:
+                    this.clients_lock.writeLock().lock();
+                    try {
+                        Client client = this.clients.get(msg.getClientURI());
+                        if (client != null)
+                            client.setRegistrationClass(msg.getClientRC());
+                    } finally { this.clients_lock.writeLock().unlock(); }
+                    break;
             }
             try {
                 toForward.add(m.copyWithNewEmitterURI(this.grip.getPortURI()));
@@ -751,8 +854,20 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     }
 
     public void gossipToNeighbours(GossipMessageI[] messages) throws Exception {
-        for (GossipSenderOutboundPort gsop : this.gossipNeighbours)
-            gsop.send(messages);
+        for (GossipSenderOutboundPort p : this.gossipNeighbours)
+            p.send(messages);
+    }
+
+    protected void gossipPublication(String channel, List<MessageI> messages) {
+        this.runTask(GOSSIP_POOL_URI, owner -> {
+            try {
+                GossipMessage gm = GossipMessage.publication(this.grip.getPortURI(), channel, messages);
+                this.seenMessages.put(gm.gossipMessageURI(), gm.timestamp());
+                this.gossipToNeighbours(new GossipMessageI[]{ gm });
+            } catch (Exception e) {
+                this.traceMessage("Gossip publication error: " + e.getMessage());
+            }
+        });
     }
 
 }
