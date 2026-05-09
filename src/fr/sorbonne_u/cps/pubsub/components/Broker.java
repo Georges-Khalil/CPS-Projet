@@ -148,8 +148,9 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     private final ScheduledExecutorService flushScheduler;
 
     protected final List<GossipSenderOutboundPort> gossipNeighbours;
-    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>(); // todo: grandit pour toujours ? jamais cleaned
-    // todo : verifier que l'uri des messages ne va pas changer.
+    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>(); // todo : verifier que l'uri des messages ne va pas changer.
+    private static final long SEEN_MESSAGES_CLEAN_INTERVAL_MS = 30_000L;
+    private final ScheduledExecutorService seenMessagesCleanScheduler;
 
     protected Broker(String brokerURI) throws Exception {
         super(brokerURI, 1, 0);
@@ -178,6 +179,15 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                 this::flushAllChannels,
                 BATCH_FLUSH_INTERVAL_MS,
                 BATCH_FLUSH_INTERVAL_MS,
+                TimeUnit.MILLISECONDS
+        );
+
+        // Scheduling when the seenMessages map is emptied
+        this.seenMessagesCleanScheduler = Executors.newSingleThreadScheduledExecutor();
+        this.seenMessagesCleanScheduler.scheduleAtFixedRate(
+                this::cleanSeenMessages,
+                SEEN_MESSAGES_CLEAN_INTERVAL_MS,
+                SEEN_MESSAGES_CLEAN_INTERVAL_MS,
                 TimeUnit.MILLISECONDS
         );
 
@@ -872,4 +882,9 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         });
     }
 
+    // Cleans the seenMessages map so that it does not grow indefinitely.
+    protected void cleanSeenMessages() {
+        Instant cutoff = Instant.now().minusSeconds(SEEN_MESSAGES_CLEAN_INTERVAL_MS);
+        this.seenMessages.entrySet().removeIf(e -> e.getValue().isBefore(cutoff));
+    }
 }
