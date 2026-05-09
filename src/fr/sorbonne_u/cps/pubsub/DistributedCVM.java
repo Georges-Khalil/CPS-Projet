@@ -32,7 +32,7 @@ public class DistributedCVM extends AbstractDistributedCVM {
     protected static final String turbineURI = "turbine_GA";
     protected static final String stationURI = "station_GB";
     protected static final String bureauURI = "bureau_GC";
-    protected final String clockURI = URIGenerator.getNew("Clock");
+    protected static final String clockURI = "clock-uri";
 
     public DistributedCVM(String[] args) throws Exception {
         super(args);
@@ -47,38 +47,47 @@ public class DistributedCVM extends AbstractDistributedCVM {
         );
         this.toggleTracing(broker);
 
-        TestScenario testScenario = getScenario(turbineURI, stationURI); // Same scenario for everybody is a bad idea but it's for test, remove it later
+        TestScenario testScenario = getScenario(turbineURI, stationURI, bureauURI);
         switch (getThisJVMURI()) {
             case GROUP_A_JVM_URI:
+                AbstractComponent.createComponent(
+                        ClocksServer.class.getCanonicalName(),
+                        new Object[] {
+                                clockURI,
+                                TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + 2000),
+                                Instant.now().plus(24, ChronoUnit.HOURS),
+                                1.0
+                        });
+
                 AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[]{turbineURI, new Position(0, 0), testScenario});
+                toggleTracing(turbineURI);
                 break;
             case GROUP_B_JVM_URI:
                 AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[]{stationURI, new Position(0, 0), testScenario});
+                toggleTracing(stationURI);
                 break;
             case GROUP_C_JVM_URI:
                 AbstractComponent.createComponent(Bureau.class.getCanonicalName(), new Object[]{bureauURI, testScenario});
+                toggleTracing(bureauURI);
                 break;
             default:
                 throw new Exception("URI unknow : " + getThisJVMURI());
         }
 
-        AbstractComponent.createComponent(
-                ClocksServer.class.getCanonicalName(),
-                new Object[] {
-                        clockURI, // must use the same in the test scenario
-                        TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + 2000),
-                        Instant.now().plus(24, ChronoUnit.HOURS),
-                        1.0
-                });
-
         super.instantiateAndPublish();
     }
 
-    private TestScenario getScenario(String t1, String s1) {
+    private TestScenario getScenario(String t1, String s1, String b1) {
         Instant start = Instant.now().plus(24, ChronoUnit.HOURS);
         return new TestScenario(clockURI, start, start.plus(1, ChronoUnit.HOURS), new TestStepI[]{
                 new TestStep(clockURI, t1, start.plusSeconds(2), owner -> {
-                    owner.traceMessage("Hello from ???");
+                    owner.traceMessage("Hello from ??? Turbine");
+                }),
+                new TestStep(clockURI, s1, start.plusSeconds(2), owner -> {
+                    owner.traceMessage("Hello from ??? Station");
+                }),
+                new TestStep(clockURI, b1, start.plusSeconds(2), owner -> {
+                    owner.traceMessage("Hello from ??? Bureau");
                 })
         });
     }
