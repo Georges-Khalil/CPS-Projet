@@ -12,6 +12,7 @@ import fr.sorbonne_u.cps.pubsub.connectors.AbnormalTerminationNotificationConnec
 import fr.sorbonne_u.cps.pubsub.connectors.GossipConnector;
 import fr.sorbonne_u.cps.pubsub.connectors.ReceivingConnector;
 import fr.sorbonne_u.cps.pubsub.exceptions.*;
+import fr.sorbonne_u.cps.pubsub.exceptions.ChannelQuotaExceededException;
 import fr.sorbonne_u.cps.pubsub.interfaces.*;
 import fr.sorbonne_u.cps.pubsub.message.GossipMessage;
 import fr.sorbonne_u.cps.pubsub.ports.*;
