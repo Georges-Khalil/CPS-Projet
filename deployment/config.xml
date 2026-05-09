@@ -7,17 +7,17 @@
   <globalRegistry  hostname="localhost" port="55252"/>
   <rmiRegistryPort no="55999"/>
   <jvms2hostnames>
-    <jvm2hostname jvmuri="GROUP_A_JVM"
+    <jvm2hostname jvmuri="FRANCE_JVM"
         rmiRegistryCreator="true"
         hostname="localhost"
         mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"
         reflective="true"/>
-    <jvm2hostname jvmuri="GROUP_B_JVM"
+    <jvm2hostname jvmuri="CANADA_JVM"
         rmiRegistryCreator="false"
         hostname="localhost"
         mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"
         reflective="true"/>
-      <jvm2hostname jvmuri="GROUP_C_JVM"
+      <jvm2hostname jvmuri="BELGIUM_JVM"
         rmiRegistryCreator="false"
         hostname="localhost"
         mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"

@@ -15,6 +15,7 @@ import fr.sorbonne_u.cps.pubsub.exceptions.AlreadyRegisteredException;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
+import fr.sorbonne_u.cps.pubsub.scenario.ComplexDistributedScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.DistributedScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.FullOperationScenario;
 import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
@@ -30,9 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DistributedCVM extends AbstractDistributedCVM {
 
-    protected static final String GROUP_A_JVM_URI = "GROUP_A_JVM";
-    protected static final String GROUP_B_JVM_URI = "GROUP_B_JVM";
-    protected static final String GROUP_C_JVM_URI = "GROUP_C_JVM";
+    protected static final String GROUP_A_JVM_URI = "FRANCE_JVM", GROUP_B_JVM_URI = "CANADA_JVM", GROUP_C_JVM_URI = "BELGIUM_JVM";
     protected static final String[] groups = new String[] { GROUP_A_JVM_URI, GROUP_B_JVM_URI, GROUP_C_JVM_URI };
 
     public DistributedCVM(String[] args) throws Exception {
@@ -48,7 +47,7 @@ public class DistributedCVM extends AbstractDistributedCVM {
         );
         this.toggleTracing(broker);
 
-        AbstractScenario scenario = new DistributedScenario(this, this.thisJVMURI, groups);
+        AbstractScenario scenario = new ComplexDistributedScenario(this, this.thisJVMURI, groups);
 
         if (this.thisJVMURI.equals(groups[0])) {
             AbstractComponent.createComponent(

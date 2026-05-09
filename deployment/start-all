@@ -8,6 +8,6 @@ gnome-terminal -- bash -c "./start-cyclicbarrier; exec bash" &
 
 sleep 2
 
-gnome-terminal -- bash -c "./start-dcvm GROUP_A_JVM; exec bash" &
-gnome-terminal -- bash -c "./start-dcvm GROUP_B_JVM; exec bash" &
-gnome-terminal -- bash -c "./start-dcvm GROUP_C_JVM; exec bash" &
+gnome-terminal -- bash -c "./start-dcvm FRANCE_JVM; exec bash" &
+gnome-terminal -- bash -c "./start-dcvm CANADA_JVM; exec bash" &
+gnome-terminal -- bash -c "./start-dcvm BELGIUM_JVM; exec bash" &
