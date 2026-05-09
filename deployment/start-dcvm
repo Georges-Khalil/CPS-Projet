@@ -3,6 +3,7 @@ if [ -z "$1" ]; then
   echo usage: $0 testNumber jvmName
   exit
  fi
-java -ea -cp 'jars/*' -Djava.security.manager \
+
+/usr/lib/jvm/jre1.8.0_491/bin/java -ea -cp 'jars/*' -Djava.security.manager \
      -Djava.security.policy=dcvm.policy \
      fr.sorbonne_u.cps.pubsub.DistributedCVM $1 config.xml
