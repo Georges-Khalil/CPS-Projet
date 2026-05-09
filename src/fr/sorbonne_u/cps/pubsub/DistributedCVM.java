@@ -2,6 +2,8 @@ package fr.sorbonne_u.cps.pubsub;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractDistributedCVM;
+import fr.sorbonne_u.components.reflection.connectors.ReflectionConnector;
+import fr.sorbonne_u.components.reflection.ports.ReflectionOutboundPort;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.components.utils.tests.TestStep;
 import fr.sorbonne_u.components.utils.tests.TestStepI;
@@ -9,6 +11,8 @@ import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.components.Bureau;
 import fr.sorbonne_u.cps.pubsub.components.Station;
 import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.exceptions.AlreadyRegisteredException;
+import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.FullOperationScenario;
@@ -81,12 +85,27 @@ public class DistributedCVM extends AbstractDistributedCVM {
         Instant start = Instant.now().plus(24, ChronoUnit.HOURS);
         return new TestScenario(clockURI, start, start.plus(1, ChronoUnit.HOURS), new TestStepI[]{
                 new TestStep(clockURI, t1, start.plusSeconds(2), owner -> {
+                    try {
+                        ((WindTurbine)owner).getRegistrationPlugin().register(RegistrationCI.RegistrationClass.STANDARD);
+                    } catch (AlreadyRegisteredException e) {
+                        throw new RuntimeException(e);
+                    }
                     owner.traceMessage("Hello from ??? Turbine");
                 }),
                 new TestStep(clockURI, s1, start.plusSeconds(2), owner -> {
+                    try {
+                        ((Station)owner).getRegistrationPlugin().register(RegistrationCI.RegistrationClass.STANDARD);
+                    } catch (AlreadyRegisteredException e) {
+                        throw new RuntimeException(e);
+                    }
                     owner.traceMessage("Hello from ??? Station");
                 }),
                 new TestStep(clockURI, b1, start.plusSeconds(2), owner -> {
+                    try {
+                        ((Bureau)owner).getRegistrationPlugin().register(RegistrationCI.RegistrationClass.STANDARD);
+                    } catch (AlreadyRegisteredException e) {
+                        throw new RuntimeException(e);
+                    }
                     owner.traceMessage("Hello from ??? Bureau");
                 })
         });
@@ -96,16 +115,26 @@ public class DistributedCVM extends AbstractDistributedCVM {
     public void interconnect() throws Exception {
         switch (getThisJVMURI()) {
             case GROUP_A_JVM_URI: // Add neighbours
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_B_JVM_URI);
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_C_JVM_URI);
                 break;
             case GROUP_B_JVM_URI:
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_A_JVM_URI);
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_C_JVM_URI);
                 break;
             case GROUP_C_JVM_URI:
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_A_JVM_URI);
+                connectBrokerToNeighbour( "Broker-" + getThisJVMURI(),  "gossip-receiver-" + "Broker-" + GROUP_B_JVM_URI);
                 break;
             default:
                 throw new Exception("URI unknow : " + getThisJVMURI());
         }
 
         super.interconnect();
+    }
+
+    private void connectBrokerToNeighbour(String localBrokerURI, String remoteGripURI) throws Exception {
+        ((Broker)this.uri2component.get(localBrokerURI)).connectToNeighbour(remoteGripURI);
     }
 
     public static void main(String[] args) throws Exception {

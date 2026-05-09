@@ -760,11 +760,11 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     @Override
-    public void update(GossipMessageI[] fromSender) { // TODO: change URI for all the brokers (no static ports ...)
+    public void update(GossipMessageI[] fromSender) {
         List<GossipMessageI> toForward = new ArrayList<>();
 
         for (GossipMessageI m : fromSender) {
-            if (this.seenMessages.containsKey(m.gossipMessageURI()) || !(m instanceof GossipMessage)) // TODO: Maybe no continue because Mr. Malenfant doesn't like that
+            if (this.seenMessages.containsKey(m.gossipMessageURI()) || !(m instanceof GossipMessage))
                 continue;
             this.seenMessages.put(m.gossipMessageURI(), m.timestamp());
 
