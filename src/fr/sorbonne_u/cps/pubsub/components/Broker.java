@@ -204,6 +204,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     public synchronized void finalise() throws Exception {
         // Scheduler stop
         this.flushScheduler.shutdown(); // todo: is that all for shutting down the scheduler ?
+        this.seenMessagesCleanScheduler.shutdown();
 
         // Gossip disconnection
         for (GossipSenderOutboundPort p : this.gossipNeighbours)
