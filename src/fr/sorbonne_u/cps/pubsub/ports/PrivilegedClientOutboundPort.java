@@ -49,14 +49,4 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
 
     }
 
-    // todo : figure out what to do with this method
-    @Override
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-
-    }
-
-    @Override
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return false;
-    }
 }

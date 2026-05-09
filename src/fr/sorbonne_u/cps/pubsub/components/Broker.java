@@ -553,25 +553,23 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         }
     }
 
-    public boolean modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
+    public void modifyFilter(String receptionPortURI, String channel, MessageFilterI filter) throws Exception {
         if (filter == null)
-            return false; // Si on ne peut pas appliquer le filtre, on doit return false.
+            throw new IllegalArgumentException();
         if (!subscribed(receptionPortURI, channel))
-            return false;
+            throw new NotSubscribedChannelException();
 
         this.channels_lock.writeLock().lock();
         this.clients_lock.readLock().lock();
         try {
             Client client = this.clients.get(receptionPortURI);
             Subscription sub = this.channels.get(channel).subscribers.get(receptionPortURI);
-            if (sub == null)
-                return false;
-            sub.setFilter(filter);
+            if (sub != null)
+                sub.setFilter(filter);
         } finally {
             this.channels_lock.writeLock().unlock();
             this.clients_lock.readLock().unlock();
         }
-        return true;
     }
 
     public Boolean channelAuthorised(String receptionPortURI, String channel) throws Exception {

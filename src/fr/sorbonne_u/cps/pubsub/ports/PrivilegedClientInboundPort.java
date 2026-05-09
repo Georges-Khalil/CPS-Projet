@@ -67,14 +67,4 @@ public class PrivilegedClientInboundPort extends PublishingInboundPort implement
                 });
     }
 
-    // todo : figure out what to do with this method
-    @Override
-    public boolean isAuthorisedUser(String channel, String uri) throws Exception {
-        return false;
-    }
-
-    @Override
-    public void removeAuthorisedUsers(String receptionPortURI, String channel, String regularExpression) throws Exception {
-
-    }
 }
