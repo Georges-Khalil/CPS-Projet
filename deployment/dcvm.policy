@@ -4,6 +4,7 @@ grant {
   permission java.lang.RuntimePermission "accessClassInPackage.com.sun.corba.se.impl.io";
   permission java.lang.RuntimePermission "accessClassInPackage.com.sun.corba.se.impl.util";
   permission java.lang.RuntimePermission "accessClassInPackage.com.sun.corba.se.spi.orb";
+  permission java.lang.RuntimePermission "accessClassInPackage.sun.reflect.generics.reflectiveObjects";
   permission java.io.FilePermission "<<ALL FILES>>", "read";
   permission java.lang.RuntimePermission "accessDeclaredMembers" ;
   permission java.lang.RuntimePermission "getClassLoader" ;

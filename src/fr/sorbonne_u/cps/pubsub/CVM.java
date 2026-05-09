@@ -46,7 +46,7 @@ public class CVM extends AbstractCVM {
         String clock = AbstractComponent.createComponent(
                 ClocksServer.class.getCanonicalName(),
                 new Object[] {
-                        scenario.clockURI, // must use the same in the test scenario
+                        AbstractScenario.clockURI, // must use the same in the test scenario
                         TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + scenario.startDelay),
                         scenario.startInstant, // idem
                         scenario.accelerationFactor
