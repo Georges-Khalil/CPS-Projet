@@ -1,7 +1,6 @@
 package fr.sorbonne_u.cps.pubsub;
 
 import fr.sorbonne_u.components.AbstractComponent;
-import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.components.cvm.AbstractDistributedCVM;
 import fr.sorbonne_u.cps.pubsub.components.Broker;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
@@ -15,8 +14,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class DistributedCVM extends AbstractDistributedCVM {
 
-    protected static final String BROKER_JVM_URI = "BROKER_JVM";
-    protected static final String CLIENTS_JVM_URI = "CLIENTS_JVM";
+    protected static final String GROUP_A_JVM_URI = "GROUP_A_JVM";
+    protected static final String GROUP_B_JVM_URI = "GROUP_B_JVM";
+    protected static final String GROUP_C_JVM_URI = "GROUP_C_JVM";
 
     public DistributedCVM(String[] args) throws Exception {
         super(args);
@@ -24,46 +24,40 @@ public class DistributedCVM extends AbstractDistributedCVM {
 
     @Override
     public void instantiateAndPublish() throws Exception {
+        System.out.println("Create broker : " + "Broker-" + getThisJVMURI());
+        String broker = AbstractComponent.createComponent(
+                Broker.class.getCanonicalName(),
+                new Object[]{ "Broker-" + getThisJVMURI() }
+        );
+        this.toggleTracing(broker);
+
         switch (getThisJVMURI()) {
-            case BROKER_JVM_URI:
+            case GROUP_A_JVM_URI:
                 break;
-            case CLIENTS_JVM_URI:
+            case GROUP_B_JVM_URI:
+                break;
+            case GROUP_C_JVM_URI:
                 break;
             default:
                 throw new Exception("URI unknow : " + getThisJVMURI());
         }
+        super.instantiateAndPublish();
     }
 
     @Override
-    public void deploy() throws Exception {
+    public void interconnect() throws Exception {
+        switch (getThisJVMURI()) {
+            case GROUP_A_JVM_URI: // Add neighbours
+                break;
+            case GROUP_B_JVM_URI:
+                break;
+            case GROUP_C_JVM_URI:
+                break;
+            default:
+                throw new Exception("URI unknow : " + getThisJVMURI());
+        }
 
-        // ----- Creation of the components -----
-        String broker = AbstractComponent.createComponent(
-                Broker.class.getCanonicalName(),
-                new Object[]{}
-        );
-
-        // ----- Choose the test scenario -----
-        AbstractScenario scenario = new FullOperationScenario(this);
-
-        // create the clock server and the clock used to synchronise the
-        // components actions in the test scenario
-        String clock = AbstractComponent.createComponent(
-                ClocksServer.class.getCanonicalName(),
-                new Object[] {
-                        scenario.clockURI, // must use the same in the test scenario
-                        TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + scenario.startDelay),
-                        scenario.startInstant, // idem
-                        scenario.accelerationFactor
-                });
-
-        // ----- Enable tracing -----
-        this.toggleTracing(broker);
-        this.toggleTracing(clock);
-
-        // The connexions are dynamically created
-
-        super.deploy();
+        super.interconnect();
     }
 
     public static void main(String[] args) throws Exception {

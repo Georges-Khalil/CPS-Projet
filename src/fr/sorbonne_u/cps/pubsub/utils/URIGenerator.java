@@ -1,5 +1,6 @@
 package fr.sorbonne_u.cps.pubsub.utils;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -10,8 +11,10 @@ public class URIGenerator {
     private final static AtomicInteger counter = new AtomicInteger(0),
                                        uid_counter = new AtomicInteger(0);
 
-    public static String getNew(Object o) {
-        return o.getClass().getCanonicalName() + counter.getAndAdd(1);
+    private final static Random random = new Random();
+
+    public static String getNew(String prefix) {
+        return prefix + "-" + counter.getAndAdd(1) + "-" + random.nextLong();
     }
 
     public static int getUID() {

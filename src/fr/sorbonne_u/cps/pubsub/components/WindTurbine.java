@@ -47,7 +47,7 @@ public class WindTurbine extends AbstractComponent implements ClientI {
         this.position = position;
         this.testScenario = testScenario;
 
-        this.receptionPortURI = URIGenerator.getNew(this);
+        this.receptionPortURI = URIGenerator.getNew("WindTurbineReceiver");
 
         // Create and install the subscription plugin (creates the ReceivingInboundPort)
         this.subscriptionPlugin = new ClientSubscriptionPlugin(this.receptionPortURI);

@@ -75,7 +75,7 @@ public class Bureau extends AbstractComponent implements ClientI {
         super(reflectionInboundPortURI,1, 1);
         this.testScenario = testScenario;
 
-        this.receptionPortURI = URIGenerator.getNew(this);
+        this.receptionPortURI = URIGenerator.getNew("BureauReceiver");
 
         // Create and install the subscription plugin (creates the ReceivingInboundPort)
         this.subscriptionPlugin = new ClientSubscriptionPlugin(this.receptionPortURI);

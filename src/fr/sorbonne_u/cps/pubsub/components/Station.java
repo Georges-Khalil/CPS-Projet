@@ -58,7 +58,7 @@ public class Station extends AbstractComponent {
         this.testScenario = testScenario;
         this.uid = URIGenerator.getUID();
 
-        this.receptionPortURI = URIGenerator.getNew(this);
+        this.receptionPortURI = URIGenerator.getNew("StationReceiver");
 
         // Create and install the registration plugin
         this.registrationPlugin = new ClientRegistrationPlugin(this.receptionPortURI, true);

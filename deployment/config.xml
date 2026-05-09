@@ -1,21 +1,26 @@
 <deployment>
    <hosts>
     <host name="localhost"
-          dir="/Users/jmalenfant/principal/Tests/Reflection/"/>
+          dir="/home/creator/IdeaProjects/CPS-Projet/deployment/"/>
   </hosts>
   <cyclicBarrier   hostname="localhost" port="55253"/>
   <globalRegistry  hostname="localhost" port="55252"/>
   <rmiRegistryPort no="55999"/>
   <jvms2hostnames>
-    <jvm2hostname jvmuri="server"
+    <jvm2hostname jvmuri="GROUP_A_JVM"
         rmiRegistryCreator="true"
         hostname="localhost"
-        mainclass="fr.sorbonne_u.components.examples.reflection.DistributedCVM"
+        mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"
         reflective="true"/>
-    <jvm2hostname jvmuri="client"
+    <jvm2hostname jvmuri="GROUP_B_JVM"
         rmiRegistryCreator="false"
         hostname="localhost"
-        mainclass="fr.sorbonne_u.components.examples.reflection.DistributedCVM"
+        mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"
+        reflective="true"/>
+      <jvm2hostname jvmuri="GROUP_C_JVM"
+        rmiRegistryCreator="false"
+        hostname="localhost"
+        mainclass="fr.sorbonne_u.cps.pubsub.DistributedCVM"
         reflective="true"/>
   </jvms2hostnames>
 </deployment>

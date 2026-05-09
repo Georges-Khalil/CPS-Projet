@@ -24,7 +24,7 @@ public class CVM extends AbstractCVM {
 
         String broker = AbstractComponent.createComponent(
                 Broker.class.getCanonicalName(),
-                new Object[]{}
+                new Object[]{"MonoBrokerURI"}
         );
 
         // ----- Choose the test scenario -----
