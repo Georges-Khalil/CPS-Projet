@@ -2,11 +2,22 @@ package fr.sorbonne_u.cps.pubsub;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.cvm.AbstractDistributedCVM;
+import fr.sorbonne_u.components.utils.tests.TestScenario;
+import fr.sorbonne_u.components.utils.tests.TestStep;
+import fr.sorbonne_u.components.utils.tests.TestStepI;
 import fr.sorbonne_u.cps.pubsub.components.Broker;
+import fr.sorbonne_u.cps.pubsub.components.Bureau;
+import fr.sorbonne_u.cps.pubsub.components.Station;
+import fr.sorbonne_u.cps.pubsub.components.WindTurbine;
+import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.scenario.AbstractScenario;
 import fr.sorbonne_u.cps.pubsub.scenario.FullOperationScenario;
+import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 import fr.sorbonne_u.utils.aclocks.ClocksServer;
+import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -17,6 +28,11 @@ public class DistributedCVM extends AbstractDistributedCVM {
     protected static final String GROUP_A_JVM_URI = "GROUP_A_JVM";
     protected static final String GROUP_B_JVM_URI = "GROUP_B_JVM";
     protected static final String GROUP_C_JVM_URI = "GROUP_C_JVM";
+
+    protected static final String turbineURI = "turbine_GA";
+    protected static final String stationURI = "station_GB";
+    protected static final String bureauURI = "bureau_GC";
+    protected final String clockURI = URIGenerator.getNew("Clock");
 
     public DistributedCVM(String[] args) throws Exception {
         super(args);
@@ -31,17 +47,40 @@ public class DistributedCVM extends AbstractDistributedCVM {
         );
         this.toggleTracing(broker);
 
+        TestScenario testScenario = getScenario(turbineURI, stationURI); // Same scenario for everybody is a bad idea but it's for test, remove it later
         switch (getThisJVMURI()) {
             case GROUP_A_JVM_URI:
+                AbstractComponent.createComponent(WindTurbine.class.getCanonicalName(), new Object[]{turbineURI, new Position(0, 0), testScenario});
                 break;
             case GROUP_B_JVM_URI:
+                AbstractComponent.createComponent(Station.class.getCanonicalName(), new Object[]{stationURI, new Position(0, 0), testScenario});
                 break;
             case GROUP_C_JVM_URI:
+                AbstractComponent.createComponent(Bureau.class.getCanonicalName(), new Object[]{bureauURI, testScenario});
                 break;
             default:
                 throw new Exception("URI unknow : " + getThisJVMURI());
         }
+
+        AbstractComponent.createComponent(
+                ClocksServer.class.getCanonicalName(),
+                new Object[] {
+                        clockURI, // must use the same in the test scenario
+                        TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis() + 2000),
+                        Instant.now().plus(24, ChronoUnit.HOURS),
+                        1.0
+                });
+
         super.instantiateAndPublish();
+    }
+
+    private TestScenario getScenario(String t1, String s1) {
+        Instant start = Instant.now().plus(24, ChronoUnit.HOURS);
+        return new TestScenario(clockURI, start, start.plus(1, ChronoUnit.HOURS), new TestStepI[]{
+                new TestStep(clockURI, t1, start.plusSeconds(2), owner -> {
+                    owner.traceMessage("Hello from ???");
+                })
+        });
     }
 
     @Override
