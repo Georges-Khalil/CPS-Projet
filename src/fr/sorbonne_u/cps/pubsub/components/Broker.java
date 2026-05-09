@@ -149,7 +149,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     protected final List<GossipSenderOutboundPort> gossipNeighbours;
     private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>(); // todo : verifier que l'uri des messages ne va pas changer.
-    private static final long SEEN_MESSAGES_CLEAN_INTERVAL_MS = 30_000L;
+    private static final long SEEN_MESSAGES_CLEAN_SECONDS = 30L;
     private final ScheduledExecutorService seenMessagesCleanScheduler;
 
     protected Broker(String brokerURI) throws Exception {
@@ -186,9 +186,9 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         this.seenMessagesCleanScheduler = Executors.newSingleThreadScheduledExecutor();
         this.seenMessagesCleanScheduler.scheduleAtFixedRate(
                 this::cleanSeenMessages,
-                SEEN_MESSAGES_CLEAN_INTERVAL_MS,
-                SEEN_MESSAGES_CLEAN_INTERVAL_MS,
-                TimeUnit.MILLISECONDS
+                SEEN_MESSAGES_CLEAN_SECONDS,
+                SEEN_MESSAGES_CLEAN_SECONDS,
+                TimeUnit.SECONDS
         );
 
         // Gossip
@@ -205,6 +205,17 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         // Scheduler stop
         this.flushScheduler.shutdown(); // todo: is that all for shutting down the scheduler ?
         this.seenMessagesCleanScheduler.shutdown();
+        // If there was still a pending flush, wait for it to finish
+        try {
+            if (!this.flushScheduler.awaitTermination(500, TimeUnit.MILLISECONDS))
+                this.flushScheduler.shutdownNow();
+            if (!this.seenMessagesCleanScheduler.awaitTermination(200, TimeUnit.MILLISECONDS))
+                this.seenMessagesCleanScheduler.shutdownNow();
+        } catch (InterruptedException e) {
+            this.flushScheduler.shutdownNow();
+            this.seenMessagesCleanScheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
 
         // Gossip disconnection
         for (GossipSenderOutboundPort p : this.gossipNeighbours)
@@ -212,7 +223,8 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
         // Client disconnection
         for (Client client : this.clients.values())
-            this.doPortDisconnection(client.getPort().getPortURI());
+            if (client.getPort() != null) // Gossip clients don't have a port and should be skipped
+                this.doPortDisconnection(client.getPort().getPortURI());
         super.finalise();
     }
 
@@ -227,7 +239,8 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                 p.destroyPort();
             }
             for (Client client : this.clients.values())
-                client.getPort().unpublishPort();
+                if (client.getPort() != null) // Gossip clients don't have a port and should be skipped
+                    client.getPort().unpublishPort();
         } catch (Exception e) {
             throw new ComponentShutdownException(e);
         }
@@ -885,7 +898,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     // Cleans the seenMessages map so that it does not grow indefinitely.
     protected void cleanSeenMessages() {
-        Instant cutoff = Instant.now().minusSeconds(SEEN_MESSAGES_CLEAN_INTERVAL_MS);
+        Instant cutoff = Instant.now().minusSeconds(SEEN_MESSAGES_CLEAN_SECONDS);
         this.seenMessages.entrySet().removeIf(e -> e.getValue().isBefore(cutoff));
     }
 }
