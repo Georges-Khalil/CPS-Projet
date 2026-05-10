@@ -5,6 +5,10 @@ import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.utils.tests.TestScenario;
 import fr.sorbonne_u.cps.meteo.interfaces.RegionI;
 import fr.sorbonne_u.cps.meteo.interfaces.WindDataI;
+import fr.sorbonne_u.cps.pubsub.filters.ComparableValueFilter;
+import fr.sorbonne_u.cps.pubsub.filters.MessageFilter;
+import fr.sorbonne_u.cps.pubsub.filters.PropertyFilter;
+import fr.sorbonne_u.cps.pubsub.interfaces.MessageFilterI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.interfaces.RegistrationCI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
@@ -12,6 +16,7 @@ import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI.Level;
+import fr.sorbonne_u.cps.pubsub.meteo.messages.AlertMessage;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPrivilegedPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientRegistrationPlugin;
@@ -64,7 +69,7 @@ public class Bureau extends AbstractComponent implements ClientI {
         return privilegedPlugin;
     }
 
-    protected final HashMap<Integer, RegionI> stations;
+    public static MessageFilterI WindFilter = new MessageFilter(new PropertyFilter("Type", new ComparableValueFilter("Wind")));
 
     /**
      * Test scenario configuration for the Bureau component.
@@ -97,8 +102,6 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.subscriptionPlugin.setRegistrationPlugin(this.registrationPlugin);
         this.publicationPlugin.setRegistrationPlugin(this.registrationPlugin);
         this.privilegedPlugin.setPluginReferences(this.registrationPlugin, this.publicationPlugin);
-
-        this.stations = new HashMap<>();
     }
 
     @Override
@@ -111,35 +114,22 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.executeTestScenario(this.testScenario);
     }
 
-    protected void receiveFromStationsInfo(MessageI message) throws Exception {
-        this.stations.put((Integer) message.getPropertyValue("ID"), (RegionI) message.getPayload());
-    }
-
     protected void receiveWindData(MessageI message) throws Exception {
         WindDataI windData = (WindDataI) message.getPayload();
         double force = windData.force();
 
-        RegionI region = this.stations.get((Integer) message.getPropertyValue("ID"));
-
-        if (region == null) {
-            // Skip creating alert if station info not available yet
-            return;
-        }
-
-        MeteoAlert alert1 = new MeteoAlert(
+        AlertMessage msg = new AlertMessage(new MeteoAlert(
                 ((Position) windData.getPosition()).x < 0
                         ? MeteoAlertI.AlertType.STORM : MeteoAlertI.AlertType.ICY_STORM,
                 force < 20 ? Level.GREEN : force < 60 ? Level.YELLOW
                         : force < 100 ? Level.ORANGE : force < 150 ? Level.RED : Level.SCARLET,
-                new RegionI[] { region },
+                new RegionI[] {(RegionI) message.getPropertyValue("Region")},
                 Instant.now(),
                 Duration.ofHours(((Position) windData.getPosition()).x % 7)
-        );
-        Message msg1 = new Message(alert1);
-        msg1.putProperty("type", "alert");
+        ));
 
-        this.publicationPlugin.publish(WEATHER_ALERTS_CHANNEL, msg1);
-        this.traceMessage("Alert published on '" + WEATHER_ALERTS_CHANNEL + "' - " + alert1 + "\n");
+        this.publicationPlugin.publish(WEATHER_ALERTS_CHANNEL, msg);
+        this.traceMessage("Alert published on '" + WEATHER_ALERTS_CHANNEL + "' - " + msg.getPayload() + "\n");
     }
 
     @Override
@@ -147,10 +137,7 @@ public class Bureau extends AbstractComponent implements ClientI {
         this.traceMessage("Message received on '" + channel +
                 "' | payload=" + message.getPayload() + "\n");
 
-        if (channel.equals(WEATHER_ALERTS_CHANNEL))
-            this.receiveFromStationsInfo(message);
-        else
-            this.receiveWindData(message);
+        this.receiveWindData(message);
     }
 
     @Override

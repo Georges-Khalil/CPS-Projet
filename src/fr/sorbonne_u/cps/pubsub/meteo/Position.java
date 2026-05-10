@@ -2,6 +2,7 @@ package fr.sorbonne_u.cps.pubsub.meteo;
 
 import com.sun.corba.se.impl.io.TypeMismatchException;
 import fr.sorbonne_u.cps.meteo.interfaces.PositionI;
+import fr.sorbonne_u.cps.meteo.interfaces.RegionI;
 
 /**
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
@@ -29,5 +30,9 @@ public class Position implements PositionI {
     @Override
     public String toString() {
         return "Position{" + "x=" + x + ", y=" + y + '}';
+    }
+
+    public static RegionI toRegion(Position p) {
+        return new Region(p.x - (p.x % 16), p.y - (p.y % 16), 16, 16);
     }
 }
