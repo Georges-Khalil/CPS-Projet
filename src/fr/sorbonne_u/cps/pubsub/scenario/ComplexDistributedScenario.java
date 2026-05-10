@@ -31,11 +31,10 @@ import java.time.Instant;
  * Scenario testing dynamic modification of filters.
  *
  * Scenario details:
- * 1. WindTurbine registers and subscribes to WIND_CHANNEL with a filter for force > 10.0.
- * 2. Station publishes message with force = 5.0 (Filtered out).
- * 3. Station publishes message with force = 15.0 (Received).
- * 4. WindTurbine modifies filter to force > 20.0.
- * 5. Station publishes message with force = 15.0 (Filtered out now).
+ * 1. Setup components
+ * 2. Turbines 1, 2 and 3 receive 3 messages
+ * 4. Turbine 1 modifies filter to level RED required
+ * 2. Turbines 2 and 3 receive 4 messages but the turbine 1 receives only 1 message (force = 130)
  *
  */
 public class ComplexDistributedScenario extends AbstractScenario {
