@@ -7,9 +7,7 @@ import fr.sorbonne_u.cps.pubsub.interfaces.PrivilegedClientCI;
  * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class PrivilegedClientOutboundPort extends PublishingOutboundPort implements PrivilegedClientCI {
-    // TODO: Vérifier, peut-on extend PublishingOutboundPort? N'y a-t-il pas des problèmes dans le calcul d'instances
 
-    // TODO: How should it behave when there is no connector? --> Actuellement on a des nullpointer exceptions
     public PrivilegedClientOutboundPort(String uri, ComponentI owner) throws Exception {
         super(uri, PrivilegedClientCI.class, owner);
     }
@@ -43,10 +41,9 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
         ((PrivilegedClientCI) this.getConnector()).destroyChannel(receptionPortURI, channel);
     }
 
-    // todo : should this be empty?
     @Override
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
-
+        // TODO
     }
 
 }

@@ -95,7 +95,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     }
 
     static class Channel {
-        final String owner_uri; // todo : make field private (si on a le temps, sinon remove todo)
+        final String owner_uri;
         final Map<String, Subscription> subscribers;
         private volatile String regex;
 
@@ -148,7 +148,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     private final ScheduledExecutorService flushScheduler;
 
     protected final List<GossipSenderOutboundPort> gossipNeighbours;
-    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>(); // todo : verifier que l'uri des messages ne va pas changer.
+    private final Map<String, Instant> seenMessages = new ConcurrentHashMap<>();
     private static final long SEEN_MESSAGES_CLEAN_SECONDS = 30L;
     private final ScheduledExecutorService seenMessagesCleanScheduler;
 
@@ -203,7 +203,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     @Override
     public synchronized void finalise() throws Exception {
         // Scheduler stop
-        this.flushScheduler.shutdown(); // todo: is that all for shutting down the scheduler ?
+        this.flushScheduler.shutdown();
         this.seenMessagesCleanScheduler.shutdown();
         // If there was still a pending flush, wait for it to finish
         try {
@@ -827,7 +827,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                     this.channels_lock.writeLock().lock();
                     try {
                         Channel chan = this.channels.remove(msg.getChannelName());
-                        this.pendingMessages.remove(msg.getChannelName()); // todo verifier
+                        this.pendingMessages.remove(msg.getChannelName());
                         for (Subscription sub : chan.subscribers.values())
                             sub.getClient().removeSubscription(msg.getChannelName());
                     } finally {

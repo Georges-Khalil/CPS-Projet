@@ -168,8 +168,6 @@ public class MessageFiltersTests {
         message.putProperty("Y", 38.0);
 
         assertTrue(strong_filter.match(message));
-
-        // TODO: test with wrong values
     }
 
 }

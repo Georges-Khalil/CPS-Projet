@@ -17,7 +17,6 @@ public class GossipMessage implements GossipMessageI {
     public enum MessageType {
         PUBLICATION, REGISTRATION, CHANNEL_CREATION, CHANNEL_DESTRUCTION, CHANNEL_REGEX_UPDATE, CLIENT_RC_UPDATE
     }
-    // TODO: Type unregister?
 
     private final String uri;
     private final Instant timestamp;

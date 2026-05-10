@@ -32,7 +32,7 @@ implements AbnormalTerminationNotificationCI {
                                     .getOwnerPlugin(ClientPublicationPlugin.PLUGIN_URI))
                                     .notifyAbnormalTermination(channel, message, cause);
                         } catch (Exception e) {
-                            throw new RuntimeException(e); // TODO: FAUT GERER CA ICI ! OU ALORS DANS LE PLUGIN
+                            throw new RuntimeException(e);
                         }
                     }
                 });
@@ -49,7 +49,7 @@ implements AbnormalTerminationNotificationCI {
                                     .getOwnerPlugin(ClientPublicationPlugin.PLUGIN_URI))
                                     .notifyAbnormalTermination(channel, messages, cause);
                         } catch (Exception e) {
-                            throw new RuntimeException(e); //TODO: FAUT GERER CA ICI ! OU ALORS DANS LE PLUGIN
+                            throw new RuntimeException(e);
                         }
                     }
                 });

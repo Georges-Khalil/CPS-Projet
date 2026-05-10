@@ -15,8 +15,6 @@ import java.util.ArrayList;
  */
 public class PublishingInboundPort extends AbstractInboundPort implements PublishingCI {
 
-    // private static final long serialVersionUID = 1L;
-
     public PublishingInboundPort(ComponentI owner) throws Exception {
         super(PublishingCI.class, owner);
         assert owner instanceof Broker;
@@ -51,21 +49,6 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
                     ((Broker) c).publish(receptionPortURI, channel, message);
                     return null;
                 });
-        /* TODO: ??
-        // Les exemples proposent cette implémentation :
-        this.owner.runTask(
-                new AbstractComponent.AbstractTask() {
-                    @Override
-                    public void run() {
-                        try {
-                            ((Broker)this.getTaskOwner()).
-                                    publish(this.getTaskOwner().getReflectionInboundPortURI(),  channel, message);
-                        } catch (Throwable e) {
-                            e.printStackTrace(); ;
-                        }
-                    }
-                }) ;
-        */
     }
 
     @Override
@@ -75,22 +58,6 @@ public class PublishingInboundPort extends AbstractInboundPort implements Publis
                     ((Broker) c).publish(receptionPortURI, channel, messages);
                     return null;
                 });
-
-        /*
-        this.owner.runTask(
-                new AbstractComponent.AbstractTask() {
-                    @Override
-                    public void run() {
-                        try {
-                            ((Broker)this.getTaskOwner()).
-                                    publish(this.getTaskOwner().getReflectionInboundPortURI(),  channel, messages); ;
-                        } catch (Throwable e) {
-                            e.printStackTrace(); ;
-                        }
-                    }
-                }) ;
-
-         */
     }
 
     @Override
