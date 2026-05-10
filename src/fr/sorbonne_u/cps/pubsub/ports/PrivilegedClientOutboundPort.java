@@ -43,7 +43,7 @@ public class PrivilegedClientOutboundPort extends PublishingOutboundPort impleme
 
     @Override
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
-        // TODO
+        ((PrivilegedClientCI) this.getConnector()).destroyChannelNow(receptionPortURI, channel);
     }
 
 }
