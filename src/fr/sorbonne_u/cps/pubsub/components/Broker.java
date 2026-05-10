@@ -807,7 +807,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
                     this.clients_lock.writeLock().lock();
                     try {
                         if (!this.clients.containsKey(msg.getClientURI()))
-                            this.clients.put(msg.getClientURI(), new Client(msg.getClientURI(), null, msg.getClientRC())); // to check
+                            this.clients.put(msg.getClientURI(), new Client(msg.getClientURI(), null, msg.getClientRC()));
                     } finally {
                         this.clients_lock.writeLock().unlock();
                     }

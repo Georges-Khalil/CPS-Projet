@@ -27,16 +27,6 @@ public class RegistrationInboundPort extends AbstractInboundPort implements Regi
     public boolean registered(String receptionPortURI) throws Exception {
         return this.getOwner().handleRequest(
                 c -> ((Broker) c).registered(receptionPortURI));
-
-//        // Si on suit les exemples, on peut avoir cette forme la:
-//        return this.getOwner().handleRequest(
-//                new AbstractComponent.AbstractService<Boolean>() {
-//                    @SuppressWarnings("unchecked")
-//                    @Override
-//                    public Boolean call() throws Exception {
-//                        return ((Broker) this.getServiceOwner()).registered(receptionPortURI) ;
-//                    }
-//                }) ;
     }
 
     @Override
