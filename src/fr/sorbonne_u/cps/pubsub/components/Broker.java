@@ -18,7 +18,7 @@ import fr.sorbonne_u.cps.pubsub.message.GossipMessage;
 import fr.sorbonne_u.cps.pubsub.ports.*;
 import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
-import java.security.acl.NotOwnerException;
+// import java.security.acl.NotOwnerException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -122,8 +122,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
     public static final int CHANNEL_CREATION_QUOTA = 3;
     public static final String DEFAULT_PUBLIC_CHANNEL = "wind_channel";
     public static final String BROKER_REGISTRATION_URI = URIGenerator.getNew("BrokerRegistration");
-
-    private final String BROKER_PUBLISH_URI = URIGenerator.getNew("BrokerPublish");
+    public static final String BROKER_PUBLISH_URI = URIGenerator.getNew("BrokerPublish");
 
     private static final String RECEPTION_POOL_URI = URIGenerator.getNew("reception-pool");
     private static final String PROPAGATION_POOL_URI = URIGenerator.getNew("propagation-pool");
@@ -685,7 +684,7 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
         if (regex == null)
             throw new IllegalArgumentException();
         if (!hasCreatedChannel(receptionPortURI, channel))
-            throw new NotOwnerException();
+            throw new Exception("NotOwnerException");
         this.channels_lock.writeLock().lock();
         try {
             this.channels.get(channel).setRegex(regex);
@@ -706,13 +705,13 @@ public class Broker extends AbstractComponent implements GossipImplementationI {
 
     public void destroyChannel(String receptionPortURI, String channel) throws Exception {
         if (!hasCreatedChannel(receptionPortURI, channel))
-            throw new NotOwnerException();
+            throw new Exception("NotOwnerException");
         this.destroyChannelNow(receptionPortURI, channel);
     }
 
     public void destroyChannelNow(String receptionPortURI, String channel) throws Exception {
         if (!hasCreatedChannel(receptionPortURI, channel))
-            throw new NotOwnerException();
+            throw new Exception("NotOwnerException");
 
         // Forced flush of the channel so the messages still get sent to the subscribers.
         ConcurrentLinkedQueue<MessageI> queue = this.pendingMessages.get(channel);

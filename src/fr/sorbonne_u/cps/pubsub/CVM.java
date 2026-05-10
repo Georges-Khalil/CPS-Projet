@@ -31,7 +31,7 @@ public class CVM extends AbstractCVM {
         // AbstractScenario scenario = new SimpleScenario(this);
         // AbstractScenario scenario = new AsyncAuditScenario(this);
         //AbstractScenario scenario = new AsyncErrorScenario(this);
-        AbstractScenario scenario = new FullOperationScenario(this);
+        // AbstractScenario scenario = new FullOperationScenario(this);
         // AbstractScenario scenario = new ComplexInteractionScenario(this);
         // AbstractScenario scenario = new SecurityTestScenario(this);
         // AbstractScenario scenario = new LargeScaleScenario(this);
@@ -40,6 +40,8 @@ public class CVM extends AbstractCVM {
         // AbstractScenario scenario = new MultipleSubscriptionScenario(this);
         // AbstractScenario scenario = new UnregisterRedeployScenario(this);
         //AbstractScenario scenario = new ServiceClassUpgradeScenario(this);
+        AbstractScenario scenario = new ExceptionHandlingScenario(this);
+
 
         // create the clock server and the clock used to synchronise the
         // components actions in the test scenario
@@ -55,6 +57,7 @@ public class CVM extends AbstractCVM {
         // ----- Enable tracing -----
         this.toggleTracing(broker);
         this.toggleTracing(clock);
+        // this.executionLogOn();
 
         // The connexions are dynamically created
 
