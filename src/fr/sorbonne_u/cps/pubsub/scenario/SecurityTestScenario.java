@@ -26,6 +26,7 @@ import java.time.Instant;
  * 3. An unregistered WindTurbine tries to subscribe. Expected: UnknownClientException.
  * 4. A registered FREE component tries to publish on a channel it's not authorized for (if applicable).
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class SecurityTestScenario extends AbstractScenario {
 

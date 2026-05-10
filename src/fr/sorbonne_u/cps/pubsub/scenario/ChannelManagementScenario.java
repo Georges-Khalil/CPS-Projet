@@ -18,6 +18,8 @@ import java.time.Instant;
  * 2. Bureau creates a channel "private_channel" with a whitelist (only "allowed_station").
  * 3. Bureau modifies authorized users to allow "everyone" (.*).
  * 4. Bureau destroys the channel.
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class ChannelManagementScenario extends AbstractScenario {
 

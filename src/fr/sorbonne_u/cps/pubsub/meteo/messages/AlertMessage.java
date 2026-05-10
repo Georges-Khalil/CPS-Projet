@@ -2,8 +2,10 @@ package fr.sorbonne_u.cps.pubsub.meteo.messages;
 
 import fr.sorbonne_u.cps.meteo.interfaces.MeteoAlertI;
 import fr.sorbonne_u.cps.pubsub.message.Message;
-import fr.sorbonne_u.cps.pubsub.meteo.MeteoAlert;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class AlertMessage extends Message {
 
     public AlertMessage(MeteoAlertI alert) {

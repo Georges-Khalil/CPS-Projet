@@ -4,6 +4,9 @@ import fr.sorbonne_u.components.connectors.AbstractConnector;
 import fr.sorbonne_u.cps.pubsub.interfaces.AbnormalTerminationNotificationCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class AbnormalTerminationNotificationConnector 
 extends AbstractConnector 
 implements AbnormalTerminationNotificationCI {

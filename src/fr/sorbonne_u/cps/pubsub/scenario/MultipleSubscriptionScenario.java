@@ -44,6 +44,8 @@ import java.time.Instant;
  * - multi-turbine only receives critical alerts.
  * - multi-turbine only receives strong wind data from the private channel.
  * - Reception of messages should be interleaved as publications occur at different times.
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class MultipleSubscriptionScenario extends AbstractScenario {
 

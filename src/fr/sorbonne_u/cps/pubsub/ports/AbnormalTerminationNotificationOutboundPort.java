@@ -5,6 +5,9 @@ import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.cps.pubsub.interfaces.AbnormalTerminationNotificationCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class AbnormalTerminationNotificationOutboundPort 
 extends AbstractOutboundPort 
 implements AbnormalTerminationNotificationCI {

@@ -19,6 +19,7 @@ import java.time.Instant;
  * 3. Bureau upgrades to PREMIUM.
  * 4. Bureau tries to create a channel (Should succeed).
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class ServiceClassUpgradeScenario extends AbstractScenario {
 

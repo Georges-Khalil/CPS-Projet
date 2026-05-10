@@ -19,6 +19,8 @@ import java.time.Instant;
  *
  *
  * // NE MARCHE PAS CORRECTEMENT -> Il faut gérer l'exception de publication
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class AsyncErrorScenario extends AbstractScenario {
 

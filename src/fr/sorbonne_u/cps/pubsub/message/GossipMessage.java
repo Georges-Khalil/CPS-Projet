@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class GossipMessage implements GossipMessageI {
 
     public enum MessageType {

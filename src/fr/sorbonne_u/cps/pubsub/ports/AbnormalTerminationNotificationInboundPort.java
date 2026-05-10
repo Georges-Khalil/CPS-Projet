@@ -7,6 +7,9 @@ import fr.sorbonne_u.cps.pubsub.interfaces.AbnormalTerminationNotificationCI;
 import fr.sorbonne_u.cps.pubsub.interfaces.MessageI;
 import fr.sorbonne_u.cps.pubsub.plugins.ClientPublicationPlugin;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class AbnormalTerminationNotificationInboundPort 
 extends AbstractInboundPort 
 implements AbnormalTerminationNotificationCI {

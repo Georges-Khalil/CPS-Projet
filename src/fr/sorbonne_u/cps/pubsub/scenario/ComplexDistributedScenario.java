@@ -36,6 +36,7 @@ import java.time.Instant;
  * 4. Turbine 1 modifies filter to level RED required
  * 2. Turbines 2 and 3 receive 4 messages but the turbine 1 receives only 1 message (force = 130)
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class ComplexDistributedScenario extends AbstractScenario {
 

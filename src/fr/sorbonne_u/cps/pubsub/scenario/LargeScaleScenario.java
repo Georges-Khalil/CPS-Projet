@@ -32,6 +32,7 @@ import java.time.Instant;
  * 4. Stations publish data sequentially.
  * 5. Dynamic unsubscription and re-subscription.
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class LargeScaleScenario extends AbstractScenario {
 

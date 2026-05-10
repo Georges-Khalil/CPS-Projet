@@ -1,7 +1,6 @@
 package fr.sorbonne_u.cps.pubsub.scenario;
 
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.cps.pubsub.utils.URIGenerator;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

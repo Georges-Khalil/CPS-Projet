@@ -26,6 +26,7 @@ import java.time.Instant;
  * 5. WindTurbine re-registers and re-subscribes.
  * 6. Station publishes to WIND_CHANNEL (Received).
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class UnregisterRedeployScenario extends AbstractScenario {
 

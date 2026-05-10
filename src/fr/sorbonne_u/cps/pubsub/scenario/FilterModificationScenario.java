@@ -29,6 +29,7 @@ import java.time.Instant;
  * 4. WindTurbine modifies filter to force > 20.0.
  * 5. Station publishes message with force = 15.0 (Filtered out now).
  *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public class FilterModificationScenario extends AbstractScenario {
 

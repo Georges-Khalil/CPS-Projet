@@ -7,6 +7,8 @@ import fr.sorbonne_u.components.interfaces.RequiredCI;
  * The component interface <code>AbnormalTerminationNotificationCI</code> is 
  * used to notify a client component that an asynchronous publication has
  * failed.
+ *
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
  */
 public interface AbnormalTerminationNotificationCI 
 extends OfferedCI, RequiredCI {

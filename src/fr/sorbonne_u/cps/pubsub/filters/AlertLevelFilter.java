@@ -6,6 +6,9 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.Serializable;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class AlertLevelFilter implements MessageFilterI.ValueFilterI {
     private final MeteoAlertI.Level level;
 

@@ -5,6 +5,9 @@ import fr.sorbonne_u.cps.pubsub.message.Message;
 import fr.sorbonne_u.cps.pubsub.meteo.Position;
 import fr.sorbonne_u.cps.pubsub.meteo.WindData;
 
+/**
+ * @author Jules Ragu, Côme Lance-Perlick and Georges Khalil
+ */
 public class WindMessage extends Message {
 
     public WindMessage(Station station, double windX, double windY) {
